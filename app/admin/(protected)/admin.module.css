@@ -1,0 +1,78 @@
+.shell{
+  min-height: 100vh;
+  padding: 18px;
+}
+
+.header{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 16px 16px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(10, 11, 15, 0.55);
+  box-shadow:
+    0 16px 60px rgba(0,0,0,0.35),
+    inset 0 1px 0 rgba(255,255,255,0.07);
+  backdrop-filter: blur(10px);
+}
+
+.brand{
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 240px;
+}
+
+.brandMark{
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 40% 35%, rgba(255,255,255,0.9), rgba(255,255,255,0.3) 35%, rgba(255,255,255,0.0) 70%),
+    conic-gradient(from 180deg, rgba(247,201,72,0.95), rgba(120,227,255,0.95), rgba(255,90,122,0.90), rgba(247,201,72,0.95));
+  box-shadow: 0 0 0 6px rgba(247,201,72,0.08);
+}
+
+.brandTitle{
+  font-family: var(--font-serif);
+  letter-spacing: -0.02em;
+  font-weight: 700;
+}
+
+.brandSub{
+  margin-top: 2px;
+  font-size: 12px;
+  color: rgba(255,255,255,0.62);
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+}
+
+.nav{
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.navLink, .navButton{
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.16);
+  padding: 10px 12px;
+  background: rgba(2, 3, 6, 0.35);
+  color: rgba(255,255,255,0.86);
+  transition: border-color 120ms ease, transform 120ms ease, background 120ms ease;
+}
+.navLink:hover, .navButton:hover{
+  border-color: rgba(120,227,255,0.52);
+  transform: translateY(-1px);
+  background: rgba(2, 3, 6, 0.46);
+}
+.navButton{
+  cursor: pointer;
+}
+
+.main{
+  padding-top: 16px;
+}
+
