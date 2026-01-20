@@ -46,6 +46,11 @@ See `.env.example`.
 3) Generate a bcrypt hash (example): `npm run hash-admin-password -- "your password"`
 4) Start: `npm run dev`
 
+If login fails locally, ensure:
+- You’re typing the exact `ADMIN_USERNAME` value (not the placeholder).
+- `ADMIN_PASSWORD_HASH` includes the full bcrypt hash and `$` is escaped as `\$` in `.env`.
+- You restarted `npm run dev` after editing `.env`.
+
 ## Deployment notes (Vercel-style)
 
 - Set `ADMIN_USERNAME`, `ADMIN_PASSWORD_HASH`, `SESSION_SECRET` as **server-side env vars** (never `NEXT_PUBLIC_*`).
