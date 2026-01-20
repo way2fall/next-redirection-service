@@ -5,9 +5,9 @@ export const runtime = "edge";
 
 export async function GET(
   request: Request,
-  { params }: { params: { slug: string } | Promise<{ slug: string }> }
+  { params }: { params: Promise<{ slug: string }> }
 ) {
-  const { slug } = await Promise.resolve(params);
+  const { slug } = await params;
   const reso = await resolveRedirectForSlug(slug);
 
   if (reso.kind === "not_found") {
