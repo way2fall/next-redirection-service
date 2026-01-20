@@ -1,7 +1,7 @@
 import crypto from "node:crypto";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { getAdminEnv } from "./env";
+import { getAdminEnv, requireAdminEnv } from "./env";
 
 const COOKIE_NAME = "nrs_admin";
 const DEFAULT_TTL_SECONDS = 60 * 60 * 24 * 7;
@@ -58,7 +58,7 @@ function decode(value: string, secret: string): SessionPayload | null {
 }
 
 export function createAdminSessionCookie(username: string) {
-  const { SESSION_SECRET, ADMIN_USERNAME } = getAdminEnv();
+  const { SESSION_SECRET, ADMIN_USERNAME } = requireAdminEnv();
   const now = Math.floor(Date.now() / 1000);
   const ttl = Number(process.env.SESSION_TTL_SECONDS ?? DEFAULT_TTL_SECONDS);
   const exp = now + (Number.isFinite(ttl) ? ttl : DEFAULT_TTL_SECONDS);
@@ -94,7 +94,9 @@ export function clearAdminSessionCookie() {
 }
 
 export async function isAdminAuthed() {
-  const { SESSION_SECRET, ADMIN_USERNAME } = getAdminEnv();
+  const env = getAdminEnv();
+  if (!env) return false;
+  const { SESSION_SECRET, ADMIN_USERNAME } = env;
   const jar = await cookies();
   const value = jar.get(COOKIE_NAME)?.value;
   if (!value) return false;
@@ -106,4 +108,3 @@ export async function isAdminAuthed() {
 export async function requireAdmin() {
   if (!(await isAdminAuthed())) redirect("/admin/login");
 }
-

@@ -99,6 +99,7 @@ If login fails locally, ensure:
 - Set `ADMIN_USERNAME`, `ADMIN_PASSWORD_HASH`, `SESSION_SECRET` as **server-side env vars** (never `NEXT_PUBLIC_*`).
 - For KV, configure Upstash Redis REST env vars (`UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`).
 - Redirect handler runs at the **Edge**, admin runs on **Node.js** (server actions + server components).
+- If admin env vars are missing, the build can still succeed, but `/admin` login will show a misconfiguration message.
 
 ## Security notes
 

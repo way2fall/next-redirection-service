@@ -7,7 +7,9 @@ import { getAdminEnv } from "@/lib/auth/env";
 import { createAdminSessionCookie } from "@/lib/auth/session";
 
 export async function login(formData: FormData) {
-  const { ADMIN_USERNAME, ADMIN_PASSWORD_HASH } = getAdminEnv();
+  const env = getAdminEnv();
+  if (!env) redirect("/admin/login?error=misconfigured");
+  const { ADMIN_USERNAME, ADMIN_PASSWORD_HASH } = env;
   const username = String(formData.get("username") ?? "");
   const password = String(formData.get("password") ?? "");
 
@@ -22,4 +24,3 @@ export async function login(formData: FormData) {
   (await cookies()).set(cookie.name, cookie.value, cookie.options);
   redirect("/admin/links");
 }
-

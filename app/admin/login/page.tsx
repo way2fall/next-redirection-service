@@ -14,7 +14,13 @@ export default async function AdminLoginPage({
 
   const { error } = await searchParams;
   const errorText =
-    error === "invalid" ? "Invalid username or password." : error ? "Login failed." : null;
+    error === "invalid"
+      ? "Invalid username or password."
+      : error === "misconfigured"
+        ? "Admin auth is not configured on this deployment. Set ADMIN_USERNAME, ADMIN_PASSWORD_HASH, and SESSION_SECRET."
+        : error
+          ? "Login failed."
+          : null;
 
   return (
     <main className={styles.shell}>
@@ -75,4 +81,3 @@ export default async function AdminLoginPage({
     </main>
   );
 }
-
