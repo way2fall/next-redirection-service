@@ -17,6 +17,7 @@ function isReservedSlug(slug: string) {
     slug === "admin" ||
     slug === "api" ||
     slug === "_next" ||
+    slug === "fallback" ||
     slug === "favicon.ico" ||
     slug === "robots.txt" ||
     slug === "sitemap.xml"
@@ -31,7 +32,7 @@ function validateDestination(raw: string) {
   return url.toString();
 }
 
-export async function createLink(formData: FormData) {
+export async function createSlug(formData: FormData) {
   await requireAdmin();
   const kv = getKv();
 
@@ -49,20 +50,44 @@ export async function createLink(formData: FormData) {
     redirect("/admin/links?error=Invalid%20destination%20URL.");
   }
 
-  const exists = await kv.getDestination(slug);
+  const exists = await kv.getSlug(slug);
   if (exists) redirect("/admin/links?error=Slug%20already%20exists.");
 
-  await kv.setLink({ slug, destination });
+  await kv.createSlug({ slug, destinationUrl: destination });
   redirect(`/admin/links?created=${encodeURIComponent(slug)}`);
 }
 
-export async function deleteLink(formData: FormData) {
+export async function deleteSlug(formData: FormData) {
   await requireAdmin();
   const kv = getKv();
 
   const slug = normalizeSlug(String(formData.get("slug") ?? ""));
   if (!slug) redirect("/admin/links?error=Missing%20slug.");
 
-  await kv.deleteLink(slug);
+  await kv.deleteSlug(slug);
   redirect(`/admin/links?deleted=${encodeURIComponent(slug)}`);
+}
+
+export async function setSlugEnabled(formData: FormData) {
+  await requireAdmin();
+  const kv = getKv();
+
+  const slug = normalizeSlug(String(formData.get("slug") ?? ""));
+  const enabledRaw = String(formData.get("enabled") ?? "");
+  const enabled = enabledRaw === "1" || enabledRaw === "true";
+  if (!slug) redirect("/admin/links?error=Missing%20slug.");
+
+  await kv.setSlugEnabled(slug, enabled);
+  redirect(`/admin/links?updated=${encodeURIComponent(slug)}`);
+}
+
+export async function resetSlugClickCount(formData: FormData) {
+  await requireAdmin();
+  const kv = getKv();
+
+  const slug = normalizeSlug(String(formData.get("slug") ?? ""));
+  if (!slug) redirect("/admin/links?error=Missing%20slug.");
+
+  await kv.resetSlugClickCount(slug);
+  redirect(`/admin/links?reset=${encodeURIComponent(slug)}`);
 }

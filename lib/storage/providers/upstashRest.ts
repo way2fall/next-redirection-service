@@ -1,5 +1,14 @@
 import type { KvStore } from "../kv";
-import type { CreateLinkInput, LinkRecord } from "../types";
+import type {
+  AddDestinationInput,
+  CreateSlugInput,
+  DestinationRecord,
+  EditDestinationInput,
+  SetDestinationEnabledInput,
+  SlugDetails,
+  SlugRecord,
+  SlugSummary
+} from "../types";
 
 type UpstashResponse<T> = { result: T; error?: string };
 
@@ -22,8 +31,20 @@ function keyClicks(slug: string) {
   return `${prefix()}:clicks:${slug}`;
 }
 
+function keyDestClicks(slug: string, destinationId: string) {
+  return `${prefix()}:destClicks:${slug}:${destinationId}`;
+}
+
+function keyRoundRobin(slug: string) {
+  return `${prefix()}:rr:${slug}`;
+}
+
 function keyIndex() {
   return `${prefix()}:links:index`;
+}
+
+function keyFallbackHtml() {
+  return `${prefix()}:fallback:html`;
 }
 
 async function cmd<T>(args: Array<string | number>) {
@@ -74,65 +95,152 @@ async function cmdMany<T>(pipeline: Array<Array<string | number>>) {
   });
 }
 
+function nowIso() {
+  return new Date().toISOString();
+}
+
+function makeId() {
+  const uuid = globalThis.crypto?.randomUUID?.();
+  if (uuid) return uuid;
+  return `d_${Math.random().toString(36).slice(2, 10)}${Math.random().toString(36).slice(2, 10)}`;
+}
+
+function parseSlugRecord(raw: string, fallbackSlug: string): SlugRecord | null {
+  try {
+    const parsed = JSON.parse(raw) as any;
+
+    if (parsed?.version === 2 && typeof parsed?.slug === "string" && Array.isArray(parsed?.destinations)) {
+      const destinations: DestinationRecord[] = parsed.destinations
+        .map((d: any) => ({
+          id: String(d?.id ?? ""),
+          url: String(d?.url ?? ""),
+          enabled: Boolean(d?.enabled),
+          createdAt: typeof d?.createdAt === "string" ? d.createdAt : nowIso()
+        }))
+        .filter((d: DestinationRecord) => d.id && d.url);
+
+      return {
+        version: 2,
+        slug: parsed.slug,
+        enabled: Boolean(parsed.enabled),
+        createdAt: typeof parsed.createdAt === "string" ? parsed.createdAt : nowIso(),
+        destinations
+      };
+    }
+
+    // Back-compat: v1 shape stored as { slug, destination, createdAt }.
+    if (typeof parsed?.destination === "string") {
+      const createdAt = typeof parsed?.createdAt === "string" ? parsed.createdAt : nowIso();
+      return {
+        version: 2,
+        slug: typeof parsed?.slug === "string" ? parsed.slug : fallbackSlug,
+        enabled: true,
+        createdAt,
+        destinations: [
+          {
+            id: "legacy",
+            url: parsed.destination,
+            enabled: true,
+            createdAt
+          }
+        ]
+      };
+    }
+
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+async function getSlugRecord(slug: string) {
+  const raw = await cmd<string | null>(["GET", keyLink(slug)]);
+  if (!raw) return null;
+  return parseSlugRecord(raw, slug);
+}
+
+async function putSlugRecord(rec: SlugRecord) {
+  await cmdMany([
+    ["SET", keyLink(rec.slug), JSON.stringify(rec)],
+    ["SADD", keyIndex(), rec.slug]
+  ]);
+}
+
+function toInt(raw: string | null) {
+  const n = raw ? Number(raw) : 0;
+  return Number.isFinite(n) ? n : 0;
+}
+
 export function createUpstashRestKv(): KvStore {
   return {
-    async getDestination(slug: string) {
-      const raw = await cmd<string | null>(["GET", keyLink(slug)]);
-      if (!raw) return null;
-      try {
-        const parsed = JSON.parse(raw) as Pick<LinkRecord, "destination">;
-        return typeof parsed?.destination === "string" ? parsed.destination : null;
-      } catch {
-        return null;
-      }
+    async getRedirectConfig(slug: string) {
+      const rec = await getSlugRecord(slug);
+      if (!rec) return null;
+      return {
+        enabled: rec.enabled,
+        destinations: rec.destinations.map((d) => ({ id: d.id, url: d.url, enabled: d.enabled }))
+      };
     },
 
-    async getLink(slug) {
-      const [raw, clicksStr] = await cmdMany<string | null>([
-        ["GET", keyLink(slug)],
-        ["GET", keyClicks(slug)]
+    async nextRoundRobinCursor(slug: string) {
+      const n = await cmd<number>(["INCR", keyRoundRobin(slug)]);
+      const asNumber = Number(n);
+      return Number.isFinite(asNumber) ? Math.max(0, asNumber - 1) : 0;
+    },
+
+    async recordClick(slug: string, destinationId: string) {
+      await cmdMany([
+        ["INCR", keyClicks(slug)],
+        ["INCR", keyDestClicks(slug, destinationId)]
       ]);
-      if (!raw) return null;
-
-      try {
-        const parsed = JSON.parse(raw) as Omit<LinkRecord, "clickCount">;
-        const clickCount = clicksStr ? Number(clicksStr) : 0;
-        return { ...parsed, clickCount: Number.isFinite(clickCount) ? clickCount : 0 };
-      } catch {
-        return null;
-      }
     },
 
-    async setLink(input: CreateLinkInput) {
-      const now = new Date().toISOString();
-      const rec: Omit<LinkRecord, "clickCount"> = {
+    async getSlug(slug: string) {
+      return await getSlugRecord(slug);
+    },
+
+    async createSlug(input: CreateSlugInput) {
+      const existing = await getSlugRecord(input.slug);
+      if (existing) throw new Error("Slug already exists.");
+
+      const createdAt = nowIso();
+      const destination: DestinationRecord = {
+        id: makeId(),
+        url: input.destinationUrl,
+        enabled: true,
+        createdAt
+      };
+      const rec: SlugRecord = {
+        version: 2,
         slug: input.slug,
-        destination: input.destination,
-        createdAt: now
+        enabled: true,
+        createdAt,
+        destinations: [destination]
       };
 
       await cmdMany([
         ["SET", keyLink(input.slug), JSON.stringify(rec)],
+        ["SADD", keyIndex(), input.slug],
         ["SET", keyClicks(input.slug), "0"],
-        ["SADD", keyIndex(), input.slug]
+        ["SET", keyDestClicks(input.slug, destination.id), "0"]
       ]);
 
-      return { ...rec, clickCount: 0 };
+      return rec;
     },
 
-    async deleteLink(slug: string) {
+    async deleteSlug(slug: string) {
+      const rec = await getSlugRecord(slug);
+      const destKeys = rec ? rec.destinations.map((d) => keyDestClicks(slug, d.id)) : [];
       await cmdMany([
         ["DEL", keyLink(slug)],
         ["DEL", keyClicks(slug)],
+        ["DEL", keyRoundRobin(slug)],
+        ...destKeys.map((k) => ["DEL", k]),
         ["SREM", keyIndex(), slug]
       ]);
     },
 
-    async incrementClick(slug: string) {
-      await cmd<number>(["INCR", keyClicks(slug)]);
-    },
-
-    async listLinks() {
+    async listSlugs() {
       const slugs = await cmd<string[]>(["SMEMBERS", keyIndex()]);
       if (!slugs.length) return [];
 
@@ -144,23 +252,119 @@ export function createUpstashRestKv(): KvStore {
         cmd<Array<string | null>>(["MGET", ...clickKeys])
       ]);
 
-      const out: LinkRecord[] = [];
+      const out: SlugSummary[] = [];
       for (let i = 0; i < slugs.length; i++) {
         const raw = rawLinks[i];
         if (!raw) continue;
-        try {
-          const parsed = JSON.parse(raw) as Omit<LinkRecord, "clickCount">;
-          const clickCount = rawClicks[i] ? Number(rawClicks[i]) : 0;
-          out.push({
-            ...parsed,
-            clickCount: Number.isFinite(clickCount) ? clickCount : 0
-          });
-        } catch {
-          // ignore malformed entries
-        }
+        const rec = parseSlugRecord(raw, slugs[i]);
+        if (!rec) continue;
+        const enabledDestinationCount = rec.destinations.filter((d) => d.enabled).length;
+        out.push({
+          slug: rec.slug,
+          enabled: rec.enabled,
+          createdAt: rec.createdAt,
+          totalClickCount: toInt(rawClicks[i]),
+          destinationCount: rec.destinations.length,
+          enabledDestinationCount
+        });
       }
 
       return out.sort((a, b) => a.slug.localeCompare(b.slug));
+    },
+
+    async setSlugEnabled(slug: string, enabled: boolean) {
+      const rec = await getSlugRecord(slug);
+      if (!rec) throw new Error("Slug not found.");
+      await putSlugRecord({ ...rec, enabled });
+    },
+
+    async resetSlugClickCount(slug: string) {
+      await cmd(["SET", keyClicks(slug), "0"]);
+    },
+
+    async getSlugDetails(slug: string) {
+      const rec = await getSlugRecord(slug);
+      if (!rec) return null;
+
+      const destKeys = rec.destinations.map((d) => keyDestClicks(slug, d.id));
+      const [totalStr, rrStr, destCounts] = await Promise.all([
+        cmd<string | null>(["GET", keyClicks(slug)]),
+        cmd<string | null>(["GET", keyRoundRobin(slug)]),
+        destKeys.length
+          ? cmd<Array<string | null>>(["MGET", ...destKeys])
+          : Promise.resolve<Array<string | null>>([])
+      ]);
+
+      const destinations = rec.destinations.map((d, i) => ({
+        ...d,
+        clickCount: toInt(destCounts[i] ?? null)
+      }));
+
+      const details: SlugDetails = {
+        slug: rec.slug,
+        enabled: rec.enabled,
+        createdAt: rec.createdAt,
+        totalClickCount: toInt(totalStr),
+        roundRobinCursor: Math.max(0, toInt(rrStr) - 1),
+        destinations
+      };
+      return details;
+    },
+
+    async addDestination(input: AddDestinationInput) {
+      const rec = await getSlugRecord(input.slug);
+      if (!rec) throw new Error("Slug not found.");
+
+      const destination: DestinationRecord = {
+        id: makeId(),
+        url: input.url,
+        enabled: true,
+        createdAt: nowIso()
+      };
+      const next: SlugRecord = { ...rec, destinations: [...rec.destinations, destination] };
+
+      await cmdMany([
+        ["SET", keyLink(input.slug), JSON.stringify(next)],
+        ["SADD", keyIndex(), input.slug],
+        ["SET", keyDestClicks(input.slug, destination.id), "0"]
+      ]);
+      return next;
+    },
+
+    async editDestination(input: EditDestinationInput) {
+      const rec = await getSlugRecord(input.slug);
+      if (!rec) throw new Error("Slug not found.");
+
+      const next: SlugRecord = {
+        ...rec,
+        destinations: rec.destinations.map((d) => (d.id === input.destinationId ? { ...d, url: input.url } : d))
+      };
+
+      await putSlugRecord(next);
+      return next;
+    },
+
+    async setDestinationEnabled(input: SetDestinationEnabledInput) {
+      const rec = await getSlugRecord(input.slug);
+      if (!rec) throw new Error("Slug not found.");
+
+      const next: SlugRecord = {
+        ...rec,
+        destinations: rec.destinations.map((d) =>
+          d.id === input.destinationId ? { ...d, enabled: input.enabled } : d
+        )
+      };
+
+      await putSlugRecord(next);
+      return next;
+    },
+
+    async getFallbackHtml() {
+      return await cmd<string | null>(["GET", keyFallbackHtml()]);
+    },
+
+    async setFallbackHtml(html: string) {
+      await cmd(["SET", keyFallbackHtml(), html]);
     }
   };
 }

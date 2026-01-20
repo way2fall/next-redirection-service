@@ -1,12 +1,34 @@
-import type { CreateLinkInput, LinkRecord } from "./types";
+import type {
+  AddDestinationInput,
+  CreateSlugInput,
+  EditDestinationInput,
+  SetDestinationEnabledInput,
+  SlugDetails,
+  SlugRecord,
+  SlugSummary
+} from "./types";
 
 export interface KvStore {
-  // Redirect critical-path: keep this minimal.
-  getDestination(slug: string): Promise<string | null>;
+  // Redirect critical-path (Edge): keep this minimal.
+  getRedirectConfig(
+    slug: string
+  ): Promise<{ enabled: boolean; destinations: Array<{ id: string; url: string; enabled: boolean }> } | null>;
+  nextRoundRobinCursor(slug: string): Promise<number>;
+  recordClick(slug: string, destinationId: string): Promise<void>;
 
-  getLink(slug: string): Promise<LinkRecord | null>;
-  setLink(input: CreateLinkInput): Promise<LinkRecord>;
-  deleteLink(slug: string): Promise<void>;
-  incrementClick(slug: string): Promise<void>;
-  listLinks(): Promise<LinkRecord[]>;
+  // Admin (Node.js).
+  getSlug(slug: string): Promise<SlugRecord | null>;
+  createSlug(input: CreateSlugInput): Promise<SlugRecord>;
+  deleteSlug(slug: string): Promise<void>;
+  listSlugs(): Promise<SlugSummary[]>;
+  setSlugEnabled(slug: string, enabled: boolean): Promise<void>;
+  resetSlugClickCount(slug: string): Promise<void>;
+  getSlugDetails(slug: string): Promise<SlugDetails | null>;
+
+  addDestination(input: AddDestinationInput): Promise<SlugRecord>;
+  editDestination(input: EditDestinationInput): Promise<SlugRecord>;
+  setDestinationEnabled(input: SetDestinationEnabledInput): Promise<SlugRecord>;
+
+  getFallbackHtml(): Promise<string | null>;
+  setFallbackHtml(html: string): Promise<void>;
 }

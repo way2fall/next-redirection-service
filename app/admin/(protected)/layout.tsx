@@ -22,6 +22,9 @@ export default async function ProtectedAdminLayout({ children }: { children: Rea
           <Link className={styles.navLink} href="/admin/links">
             Links
           </Link>
+          <Link className={styles.navLink} href="/admin/fallback">
+            Fallback
+          </Link>
           <form action={logout}>
             <button className={styles.navButton} type="submit">
               Logout
@@ -33,4 +36,3 @@ export default async function ProtectedAdminLayout({ children }: { children: Rea
     </div>
   );
 }
-

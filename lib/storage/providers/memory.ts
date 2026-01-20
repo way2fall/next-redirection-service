@@ -1,41 +1,184 @@
 import type { KvStore } from "../kv";
-import type { CreateLinkInput, LinkRecord } from "../types";
+import type {
+  AddDestinationInput,
+  CreateSlugInput,
+  DestinationRecord,
+  EditDestinationInput,
+  SetDestinationEnabledInput,
+  SlugDetails,
+  SlugRecord,
+  SlugSummary
+} from "../types";
+
+function nowIso() {
+  return new Date().toISOString();
+}
+
+function makeId() {
+  return `d_${Math.random().toString(36).slice(2, 10)}${Math.random().toString(36).slice(2, 10)}`;
+}
 
 export function createMemoryKv(): KvStore {
-  const links = new Map<string, Omit<LinkRecord, "clickCount">>();
-  const clicks = new Map<string, number>();
+  const slugs = new Map<string, SlugRecord>();
+  const slugClicks = new Map<string, number>();
+  const destClicks = new Map<string, number>(); // key = `${slug}:${destId}`
+  const rr = new Map<string, number>();
+  const fallback = { html: null as string | null };
+
+  function ensureSlug(slug: string) {
+    const rec = slugs.get(slug);
+    if (!rec) throw new Error("Slug not found.");
+    return rec;
+  }
+
+  function keyDest(slug: string, destinationId: string) {
+    return `${slug}:${destinationId}`;
+  }
 
   return {
-    async getDestination(slug: string) {
-      return links.get(slug)?.destination ?? null;
-    },
-    async getLink(slug: string) {
-      const v = links.get(slug);
-      if (!v) return null;
-      return { ...v, clickCount: clicks.get(slug) ?? 0 };
-    },
-    async setLink(input: CreateLinkInput) {
-      const now = new Date().toISOString();
-      const rec: Omit<LinkRecord, "clickCount"> = {
-        slug: input.slug,
-        destination: input.destination,
-        createdAt: now
+    async getRedirectConfig(slug: string) {
+      const rec = slugs.get(slug);
+      if (!rec) return null;
+      return {
+        enabled: rec.enabled,
+        destinations: rec.destinations.map((d) => ({ id: d.id, url: d.url, enabled: d.enabled }))
       };
-      links.set(input.slug, rec);
-      clicks.set(input.slug, 0);
-      return { ...rec, clickCount: 0 };
     },
-    async deleteLink(slug: string) {
-      links.delete(slug);
-      clicks.delete(slug);
+
+    async nextRoundRobinCursor(slug: string) {
+      const cur = rr.get(slug) ?? 0;
+      rr.set(slug, cur + 1);
+      return cur;
     },
-    async incrementClick(slug: string) {
-      clicks.set(slug, (clicks.get(slug) ?? 0) + 1);
+
+    async recordClick(slug: string, destinationId: string) {
+      slugClicks.set(slug, (slugClicks.get(slug) ?? 0) + 1);
+      const k = keyDest(slug, destinationId);
+      destClicks.set(k, (destClicks.get(k) ?? 0) + 1);
     },
-    async listLinks() {
-      return [...links.values()]
-        .map((r) => ({ ...r, clickCount: clicks.get(r.slug) ?? 0 }))
-        .sort((a, b) => a.slug.localeCompare(b.slug));
+
+    async getSlug(slug: string) {
+      return slugs.get(slug) ?? null;
+    },
+
+    async createSlug(input: CreateSlugInput) {
+      if (slugs.has(input.slug)) throw new Error("Slug already exists.");
+
+      const createdAt = nowIso();
+      const destination: DestinationRecord = {
+        id: makeId(),
+        url: input.destinationUrl,
+        enabled: true,
+        createdAt
+      };
+      const rec: SlugRecord = {
+        version: 2,
+        slug: input.slug,
+        enabled: true,
+        createdAt,
+        destinations: [destination]
+      };
+
+      slugs.set(input.slug, rec);
+      slugClicks.set(input.slug, slugClicks.get(input.slug) ?? 0);
+      destClicks.set(keyDest(input.slug, destination.id), destClicks.get(keyDest(input.slug, destination.id)) ?? 0);
+      return rec;
+    },
+
+    async deleteSlug(slug: string) {
+      slugs.delete(slug);
+      slugClicks.delete(slug);
+      rr.delete(slug);
+      for (const k of [...destClicks.keys()]) {
+        if (k.startsWith(`${slug}:`)) destClicks.delete(k);
+      }
+    },
+
+    async listSlugs() {
+      const out: SlugSummary[] = [];
+      for (const rec of slugs.values()) {
+        const enabledDestinationCount = rec.destinations.filter((d) => d.enabled).length;
+        out.push({
+          slug: rec.slug,
+          enabled: rec.enabled,
+          createdAt: rec.createdAt,
+          totalClickCount: slugClicks.get(rec.slug) ?? 0,
+          destinationCount: rec.destinations.length,
+          enabledDestinationCount
+        });
+      }
+      return out.sort((a, b) => a.slug.localeCompare(b.slug));
+    },
+
+    async setSlugEnabled(slug: string, enabled: boolean) {
+      const rec = ensureSlug(slug);
+      slugs.set(slug, { ...rec, enabled });
+    },
+
+    async resetSlugClickCount(slug: string) {
+      slugClicks.set(slug, 0);
+    },
+
+    async getSlugDetails(slug: string) {
+      const rec = slugs.get(slug);
+      if (!rec) return null;
+      const destinations = rec.destinations.map((d) => ({
+        ...d,
+        clickCount: destClicks.get(keyDest(slug, d.id)) ?? 0
+      }));
+      const details: SlugDetails = {
+        slug: rec.slug,
+        enabled: rec.enabled,
+        createdAt: rec.createdAt,
+        totalClickCount: slugClicks.get(slug) ?? 0,
+        roundRobinCursor: Math.max(0, (rr.get(slug) ?? 0) - 1),
+        destinations
+      };
+      return details;
+    },
+
+    async addDestination(input: AddDestinationInput) {
+      const rec = ensureSlug(input.slug);
+      const destination: DestinationRecord = {
+        id: makeId(),
+        url: input.url,
+        enabled: true,
+        createdAt: nowIso()
+      };
+      const next = { ...rec, destinations: [...rec.destinations, destination] };
+      slugs.set(input.slug, next);
+      destClicks.set(keyDest(input.slug, destination.id), destClicks.get(keyDest(input.slug, destination.id)) ?? 0);
+      return next;
+    },
+
+    async editDestination(input: EditDestinationInput) {
+      const rec = ensureSlug(input.slug);
+      const next = {
+        ...rec,
+        destinations: rec.destinations.map((d) => (d.id === input.destinationId ? { ...d, url: input.url } : d))
+      };
+      slugs.set(input.slug, next);
+      return next;
+    },
+
+    async setDestinationEnabled(input: SetDestinationEnabledInput) {
+      const rec = ensureSlug(input.slug);
+      const next = {
+        ...rec,
+        destinations: rec.destinations.map((d) =>
+          d.id === input.destinationId ? { ...d, enabled: input.enabled } : d
+        )
+      };
+      slugs.set(input.slug, next);
+      return next;
+    },
+
+    async getFallbackHtml() {
+      return fallback.html;
+    },
+
+    async setFallbackHtml(html: string) {
+      fallback.html = html;
     }
   };
 }
