@@ -4,6 +4,12 @@ import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/auth/session";
 import { getKv } from "@/lib/storage";
 
+function actionErrorMessage(err: unknown) {
+  const msg = err instanceof Error ? err.message : "";
+  if (msg === "Slug already exists." || msg === "Slug not found." || msg === "Upstash env vars not configured.") return msg;
+  return "Storage temporarily unavailable. Please try again.";
+}
+
 function normalizeSlug(raw: string) {
   return raw.trim().toLowerCase();
 }
@@ -50,10 +56,19 @@ export async function createSlug(formData: FormData) {
     redirect("/admin/links?error=Invalid%20destination%20URL.");
   }
 
-  const exists = await kv.getSlug(slug);
+  let exists: Awaited<ReturnType<typeof kv.getSlug>> | null = null;
+  try {
+    exists = await kv.getSlug(slug);
+  } catch (err) {
+    redirect(`/admin/links?error=${encodeURIComponent(actionErrorMessage(err))}`);
+  }
   if (exists) redirect("/admin/links?error=Slug%20already%20exists.");
 
-  await kv.createSlug({ slug, destinationUrl: destination });
+  try {
+    await kv.createSlug({ slug, destinationUrl: destination });
+  } catch (err) {
+    redirect(`/admin/links?error=${encodeURIComponent(actionErrorMessage(err))}`);
+  }
   redirect(`/admin/links?created=${encodeURIComponent(slug)}`);
 }
 
@@ -64,7 +79,11 @@ export async function deleteSlug(formData: FormData) {
   const slug = normalizeSlug(String(formData.get("slug") ?? ""));
   if (!slug) redirect("/admin/links?error=Missing%20slug.");
 
-  await kv.deleteSlug(slug);
+  try {
+    await kv.deleteSlug(slug);
+  } catch (err) {
+    redirect(`/admin/links?error=${encodeURIComponent(actionErrorMessage(err))}`);
+  }
   redirect(`/admin/links?deleted=${encodeURIComponent(slug)}`);
 }
 
@@ -77,7 +96,11 @@ export async function setSlugEnabled(formData: FormData) {
   const enabled = enabledRaw === "1" || enabledRaw === "true";
   if (!slug) redirect("/admin/links?error=Missing%20slug.");
 
-  await kv.setSlugEnabled(slug, enabled);
+  try {
+    await kv.setSlugEnabled(slug, enabled);
+  } catch (err) {
+    redirect(`/admin/links?error=${encodeURIComponent(actionErrorMessage(err))}`);
+  }
   redirect(`/admin/links?updated=${encodeURIComponent(slug)}`);
 }
 
@@ -88,6 +111,10 @@ export async function resetSlugClickCount(formData: FormData) {
   const slug = normalizeSlug(String(formData.get("slug") ?? ""));
   if (!slug) redirect("/admin/links?error=Missing%20slug.");
 
-  await kv.resetSlugClickCount(slug);
+  try {
+    await kv.resetSlugClickCount(slug);
+  } catch (err) {
+    redirect(`/admin/links?error=${encodeURIComponent(actionErrorMessage(err))}`);
+  }
   redirect(`/admin/links?reset=${encodeURIComponent(slug)}`);
 }

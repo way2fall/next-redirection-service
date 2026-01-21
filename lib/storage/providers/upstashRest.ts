@@ -21,6 +21,82 @@ function getUpstashEnv() {
   return { url, token };
 }
 
+function toPositiveInt(raw: string | undefined, fallback: number) {
+  const n = raw ? Number(raw) : NaN;
+  return Number.isFinite(n) && n > 0 ? Math.floor(n) : fallback;
+}
+
+function sleep(ms: number) {
+  return new Promise<void>((resolve) => setTimeout(resolve, ms));
+}
+
+function isIdempotentCommand(cmdName: string) {
+  const c = cmdName.toUpperCase();
+  return c === "GET" || c === "MGET" || c === "SMEMBERS" || c === "SET" || c === "SADD" || c === "SREM" || c === "DEL";
+}
+
+function isRetryableStatus(status: number) {
+  return status === 408 || status === 425 || status === 429 || status === 500 || status === 502 || status === 503 || status === 504;
+}
+
+function getErrorCode(err: unknown) {
+  const anyErr = err as any;
+  return (anyErr?.cause?.code as string | undefined) ?? (anyErr?.code as string | undefined);
+}
+
+function isRetryableFetchError(err: unknown) {
+  const anyErr = err as any;
+  const code = getErrorCode(err);
+  if (code) {
+    return (
+      code === "UND_ERR_CONNECT_TIMEOUT" ||
+      code === "UND_ERR_CONNECT" ||
+      code === "UND_ERR_SOCKET" ||
+      code === "ECONNRESET" ||
+      code === "ETIMEDOUT" ||
+      code === "EAI_AGAIN" ||
+      code === "ENOTFOUND" ||
+      code === "ECONNREFUSED"
+    );
+  }
+  if (anyErr?.name === "AbortError") return true;
+  if (anyErr?.name === "TypeError" && typeof anyErr?.message === "string" && anyErr.message.includes("fetch failed")) {
+    return true;
+  }
+  return false;
+}
+
+async function upstashFetch(url: string, init: RequestInit, opts: { retry: boolean }) {
+  const timeoutMs = toPositiveInt(process.env.UPSTASH_FETCH_TIMEOUT_MS, 6500);
+  const maxAttempts = opts.retry ? toPositiveInt(process.env.UPSTASH_FETCH_MAX_ATTEMPTS, 3) : 1;
+
+  let lastErr: unknown = null;
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      const signal =
+        opts.retry && timeoutMs > 0 && typeof AbortSignal !== "undefined" && "timeout" in AbortSignal
+          ? (AbortSignal as any).timeout(timeoutMs)
+          : undefined;
+      const res = await fetch(url, { ...init, signal });
+
+      if (opts.retry && isRetryableStatus(res.status) && attempt < maxAttempts) {
+        const backoffMs = Math.min(1500, 200 * 2 ** (attempt - 1));
+        await sleep(backoffMs);
+        continue;
+      }
+
+      return res;
+    } catch (err) {
+      lastErr = err;
+      if (!opts.retry || attempt >= maxAttempts || !isRetryableFetchError(err)) throw err;
+      const backoffMs = Math.min(1500, 200 * 2 ** (attempt - 1));
+      await sleep(backoffMs);
+    }
+  }
+
+  throw lastErr ?? new Error("Upstash fetch failed.");
+}
+
 function prefix() {
   return process.env.KV_PREFIX?.trim() ? process.env.KV_PREFIX!.trim() : "nrs";
 }
@@ -53,7 +129,7 @@ async function cmd<T>(args: Array<string | number>) {
   const env = getUpstashEnv();
   if (!env) throw new Error("Upstash env vars not configured.");
 
-  const res = await fetch(env.url, {
+  const res = await upstashFetch(env.url, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${env.token}`,
@@ -61,7 +137,7 @@ async function cmd<T>(args: Array<string | number>) {
     },
     body: JSON.stringify(args),
     cache: "no-store"
-  });
+  }, { retry: isIdempotentCommand(String(args[0] ?? "")) });
 
   if (!res.ok) {
     throw new Error(`Upstash error (${res.status}): ${await res.text()}`);
@@ -76,7 +152,7 @@ async function cmdMany<T>(pipeline: Array<Array<string | number>>) {
   const env = getUpstashEnv();
   if (!env) throw new Error("Upstash env vars not configured.");
 
-  const res = await fetch(`${env.url}/pipeline`, {
+  const res = await upstashFetch(`${env.url}/pipeline`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${env.token}`,
@@ -84,7 +160,7 @@ async function cmdMany<T>(pipeline: Array<Array<string | number>>) {
     },
     body: JSON.stringify(pipeline),
     cache: "no-store"
-  });
+  }, { retry: pipeline.every((p) => isIdempotentCommand(String(p[0] ?? ""))) });
 
   if (!res.ok) {
     throw new Error(`Upstash pipeline error (${res.status}): ${await res.text()}`);
