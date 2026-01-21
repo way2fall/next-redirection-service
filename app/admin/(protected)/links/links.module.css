@@ -134,9 +134,9 @@
 .mono{ color: rgba(255,255,255,0.74); font-size: 12px; }
 
 .actions{
-  width: 1%;
-  white-space: nowrap;
   text-align: right;
+  white-space: nowrap;
+  min-width: 260px;
 }
 
 .inlineForm{ display: inline; }
@@ -166,7 +166,15 @@
   gap: 8px;
   align-items: center;
   justify-content: flex-end;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+}
+
+@media (max-width: 720px){
+  .actions{
+    min-width: auto;
+    white-space: normal;
+  }
+  .actionRow{ flex-wrap: wrap; }
 }
 
 .actionBtn{

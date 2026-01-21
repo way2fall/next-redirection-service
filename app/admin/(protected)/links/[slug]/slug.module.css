@@ -43,8 +43,17 @@
   display: flex;
   gap: 10px;
   align-items: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   padding: 14px 0 0;
+}
+
+.metaActions{
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 720px){
+  .metaActions{ flex-wrap: wrap; overflow-x: visible; }
 }
 
 .destId{
