@@ -2,6 +2,7 @@ import type { KvStore } from "../kv";
 import type {
   AddDestinationInput,
   CreateSlugInput,
+  DeleteDestinationInput,
   DestinationRecord,
   EditDestinationInput,
   SetDestinationEnabledInput,
@@ -356,6 +357,23 @@ export function createUpstashRestKv(): KvStore {
       };
 
       await putSlugRecord(next);
+      return next;
+    },
+
+    async deleteDestination(input: DeleteDestinationInput) {
+      const rec = await getSlugRecord(input.slug);
+      if (!rec) throw new Error("Slug not found.");
+
+      const next: SlugRecord = {
+        ...rec,
+        destinations: rec.destinations.filter((d) => d.id !== input.destinationId)
+      };
+
+      await cmdMany([
+        ["SET", keyLink(input.slug), JSON.stringify(next)],
+        ["SADD", keyIndex(), input.slug],
+        ["DEL", keyDestClicks(input.slug, input.destinationId)]
+      ]);
       return next;
     },
 

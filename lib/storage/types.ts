@@ -54,3 +54,8 @@ export type SetDestinationEnabledInput = {
   destinationId: string;
   enabled: boolean;
 };
+
+export type DeleteDestinationInput = {
+  slug: string;
+  destinationId: string;
+};

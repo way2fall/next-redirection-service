@@ -2,6 +2,7 @@ import type { KvStore } from "../kv";
 import type {
   AddDestinationInput,
   CreateSlugInput,
+  DeleteDestinationInput,
   DestinationRecord,
   EditDestinationInput,
   SetDestinationEnabledInput,
@@ -170,6 +171,17 @@ export function createMemoryKv(): KvStore {
         )
       };
       slugs.set(input.slug, next);
+      return next;
+    },
+
+    async deleteDestination(input: DeleteDestinationInput) {
+      const rec = ensureSlug(input.slug);
+      const next = {
+        ...rec,
+        destinations: rec.destinations.filter((d) => d.id !== input.destinationId)
+      };
+      slugs.set(input.slug, next);
+      destClicks.delete(keyDest(input.slug, input.destinationId));
       return next;
     },
 

@@ -5,7 +5,8 @@ import styles from "./slug.module.css";
 import tableStyles from "../links.module.css";
 import CopyButton from "../CopyButton";
 import { getKv } from "@/lib/storage";
-import { addDestination, editDestination, setDestinationEnabled, setSlugEnabled, resetSlugClickCount } from "./serverActions";
+import { addDestination, setDestinationEnabled, setSlugEnabled, resetSlugClickCount } from "./serverActions";
+import DestinationActions from "./DestinationActions";
 
 export const runtime = "nodejs";
 
@@ -151,17 +152,7 @@ export default async function SlugDetailPage({
                   <td className={tableStyles.mono}>{fmtDate(d.createdAt)}</td>
                   <td className={tableStyles.mono}>{d.clickCount}</td>
                   <td className={tableStyles.actions}>
-                    <details className={styles.details}>
-                      <summary className={styles.summary}>Edit</summary>
-                      <form action={editDestination} className={styles.editForm}>
-                        <input type="hidden" name="slug" value={details.slug} />
-                        <input type="hidden" name="destinationId" value={d.id} />
-                        <input className={tableStyles.input} name="url" defaultValue={d.url} required />
-                        <button className={tableStyles.actionBtn} type="submit">
-                          Save
-                        </button>
-                      </form>
-                    </details>
+                    <DestinationActions slug={details.slug} destinationId={d.id} url={d.url} />
                   </td>
                 </tr>
               ))}
@@ -204,4 +195,3 @@ export default async function SlugDetailPage({
     </div>
   );
 }
-
