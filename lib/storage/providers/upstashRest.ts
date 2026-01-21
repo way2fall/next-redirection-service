@@ -357,7 +357,9 @@ export function createUpstashRestKv(): KvStore {
     },
 
     async resetSlugClickCount(slug: string) {
-      await cmd(["SET", keyClicks(slug), "0"]);
+      const rec = await getSlugRecord(slug);
+      const destKeys = rec ? rec.destinations.map((d) => keyDestClicks(slug, d.id)) : [];
+      await cmdMany([["SET", keyClicks(slug), "0"], ...destKeys.map((k) => ["SET", k, "0"])]);
     },
 
     async getSlugDetails(slug: string) {

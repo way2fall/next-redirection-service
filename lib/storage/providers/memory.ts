@@ -119,6 +119,9 @@ export function createMemoryKv(): KvStore {
 
     async resetSlugClickCount(slug: string) {
       slugClicks.set(slug, 0);
+      for (const k of destClicks.keys()) {
+        if (k.startsWith(`${slug}:`)) destClicks.set(k, 0);
+      }
     },
 
     async getSlugDetails(slug: string) {
