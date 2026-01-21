@@ -48,6 +48,38 @@ export default async function SlugDetailPage({
 
   return (
     <div className={styles.grid}>
+      <aside className={tableStyles.panel}>
+        <header className={tableStyles.panelHeader}>
+          <h2 className={tableStyles.title} style={{ fontSize: 22 }}>
+            Add Destination
+          </h2>
+          <p className={tableStyles.sub}>New destinations join the round-robin immediately if enabled.</p>
+        </header>
+
+        <form className={tableStyles.form} action={addDestination}>
+          <input type="hidden" name="slug" value={details.slug} />
+          <label className={tableStyles.label}>
+            <span className={tableStyles.labelText}>Destination URL</span>
+            <input className={tableStyles.input} name="url" placeholder="https://example.com/landing" required />
+          </label>
+          <button className={tableStyles.create} type="submit">
+            Add Destination
+          </button>
+        </form>
+
+        <div className={tableStyles.note}>
+          <div className={tableStyles.noteTitle}>Fallback</div>
+          <p className={tableStyles.noteText}>
+            If the slug is disabled (or all destinations are disabled), traffic is redirected to{" "}
+            <code className={tableStyles.code}>/fallback</code>. Customize it in{" "}
+            <Link className={tableStyles.destLink} href="/admin/fallback">
+              admin fallback editor
+            </Link>
+            .
+          </p>
+        </div>
+      </aside>
+
       <section className={tableStyles.panel}>
         <header className={tableStyles.panelHeader}>
           <h1 className={tableStyles.title}>
@@ -160,38 +192,6 @@ export default async function SlugDetailPage({
           </table>
         </div>
       </section>
-
-      <aside className={tableStyles.panel}>
-        <header className={tableStyles.panelHeader}>
-          <h2 className={tableStyles.title} style={{ fontSize: 22 }}>
-            Add Destination
-          </h2>
-          <p className={tableStyles.sub}>New destinations join the round-robin immediately if enabled.</p>
-        </header>
-
-        <form className={tableStyles.form} action={addDestination}>
-          <input type="hidden" name="slug" value={details.slug} />
-          <label className={tableStyles.label}>
-            <span className={tableStyles.labelText}>Destination URL</span>
-            <input className={tableStyles.input} name="url" placeholder="https://example.com/landing" required />
-          </label>
-          <button className={tableStyles.create} type="submit">
-            Add Destination
-          </button>
-        </form>
-
-        <div className={tableStyles.note}>
-          <div className={tableStyles.noteTitle}>Fallback</div>
-          <p className={tableStyles.noteText}>
-            If the slug is disabled (or all destinations are disabled), traffic is redirected to{" "}
-            <code className={tableStyles.code}>/fallback</code>. Customize it in{" "}
-            <Link className={tableStyles.destLink} href="/admin/fallback">
-              admin fallback editor
-            </Link>
-            .
-          </p>
-        </div>
-      </aside>
     </div>
   );
 }

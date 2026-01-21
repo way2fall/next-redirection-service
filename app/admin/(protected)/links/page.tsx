@@ -45,6 +45,42 @@ export default async function AdminLinksPage({
 
   return (
     <div className={styles.grid}>
+      <aside className={styles.panel}>
+        <header className={styles.panelHeader}>
+          <h2 className={styles.title} style={{ fontSize: 22 }}>
+            Create Slug
+          </h2>
+          <p className={styles.sub}>Slugs are lowercased. Only letters, digits, “-”, “_”.</p>
+        </header>
+
+        <form className={styles.form} action={createSlug}>
+          <label className={styles.label}>
+            <span className={styles.labelText}>Slug</span>
+            <input className={styles.input} name="slug" placeholder="docs" required />
+          </label>
+          <label className={styles.label}>
+            <span className={styles.labelText}>First Destination URL</span>
+            <input
+              className={styles.input}
+              name="destination"
+              placeholder="https://example.com/somewhere"
+              required
+            />
+          </label>
+          <button className={styles.create} type="submit">
+            Create Link
+          </button>
+        </form>
+
+        <div className={styles.note}>
+          <div className={styles.noteTitle}>Performance boundary</div>
+          <p className={styles.noteText}>
+            Redirects resolve in <span className={styles.pill}>Edge</span> with 1 KV read + 1 KV
+            counter increment (round-robin). Analytics counters are fire-and-forget.
+          </p>
+        </div>
+      </aside>
+
       <section className={styles.panel}>
         <header className={styles.panelHeader}>
           <h1 className={styles.title}>Slugs</h1>
@@ -90,7 +126,7 @@ export default async function AdminLinksPage({
 
         <div className={styles.tableWrap}>
           {slugs.length === 0 ? (
-            <div className={styles.empty}>No slugs yet. Create your first short link on the right.</div>
+            <div className={styles.empty}>No slugs yet. Create your first short link above.</div>
           ) : (
             <table className={styles.table}>
               <thead>
@@ -109,54 +145,54 @@ export default async function AdminLinksPage({
                   const shortUrl = baseUrl ? `${baseUrl}/${s.slug}` : `/${s.slug}`;
                   return (
                     <tr key={s.slug}>
-                    <td>
-                      <code className={styles.code}>/{s.slug}</code>
-                    </td>
-                    <td className={styles.dest}>
-                      <div className={styles.linkCell}>
-                        <a className={styles.destLink} href={shortUrl} target="_blank" rel="noreferrer">
-                          {shortUrl}
-                        </a>
-                        <CopyButton text={shortUrl} />
-                      </div>
-                    </td>
-                    <td>
-                      <form action={setSlugEnabled} className={styles.inlineForm}>
-                        <input type="hidden" name="slug" value={s.slug} />
-                        <input type="hidden" name="enabled" value={s.enabled ? "0" : "1"} />
-                        <button
-                          className={`${styles.toggle} ${s.enabled ? styles.toggleOn : styles.toggleOff}`}
-                          type="submit"
-                        >
-                          {s.enabled ? "Enabled" : "Disabled"}
-                        </button>
-                      </form>
-                    </td>
-                    <td className={styles.mono}>{fmtDate(s.createdAt)}</td>
-                    <td className={styles.mono}>{s.totalClickCount}</td>
-                    <td className={styles.mono}>
-                      {s.enabledDestinationCount}/{s.destinationCount}
-                    </td>
-                    <td className={styles.actions}>
-                      <div className={styles.actionRow}>
-                        <Link className={styles.actionBtn} href={`/admin/links/${encodeURIComponent(s.slug)}`}>
-                          Manage
-                        </Link>
-                        <form action={resetSlugClickCount}>
+                      <td>
+                        <code className={styles.code}>/{s.slug}</code>
+                      </td>
+                      <td className={styles.dest}>
+                        <div className={styles.linkCell}>
+                          <a className={styles.destLink} href={shortUrl} target="_blank" rel="noreferrer">
+                            {shortUrl}
+                          </a>
+                          <CopyButton text={shortUrl} />
+                        </div>
+                      </td>
+                      <td>
+                        <form action={setSlugEnabled} className={styles.inlineForm}>
                           <input type="hidden" name="slug" value={s.slug} />
-                          <button className={`${styles.actionBtn} ${styles.reset}`} type="submit">
-                            Reset
+                          <input type="hidden" name="enabled" value={s.enabled ? "0" : "1"} />
+                          <button
+                            className={`${styles.toggle} ${s.enabled ? styles.toggleOn : styles.toggleOff}`}
+                            type="submit"
+                          >
+                            {s.enabled ? "Enabled" : "Disabled"}
                           </button>
                         </form>
-                        <form action={deleteSlug}>
-                          <input type="hidden" name="slug" value={s.slug} />
-                          <button className={`${styles.actionBtn} ${styles.delete}`} type="submit">
-                            Delete
-                          </button>
-                        </form>
-                      </div>
-                    </td>
-                  </tr>
+                      </td>
+                      <td className={styles.mono}>{fmtDate(s.createdAt)}</td>
+                      <td className={styles.mono}>{s.totalClickCount}</td>
+                      <td className={styles.mono}>
+                        {s.enabledDestinationCount}/{s.destinationCount}
+                      </td>
+                      <td className={styles.actions}>
+                        <div className={styles.actionRow}>
+                          <Link className={styles.actionBtn} href={`/admin/links/${encodeURIComponent(s.slug)}`}>
+                            Manage
+                          </Link>
+                          <form action={resetSlugClickCount}>
+                            <input type="hidden" name="slug" value={s.slug} />
+                            <button className={`${styles.actionBtn} ${styles.reset}`} type="submit">
+                              Reset
+                            </button>
+                          </form>
+                          <form action={deleteSlug}>
+                            <input type="hidden" name="slug" value={s.slug} />
+                            <button className={`${styles.actionBtn} ${styles.delete}`} type="submit">
+                              Delete
+                            </button>
+                          </form>
+                        </div>
+                      </td>
+                    </tr>
                   );
                 })}
               </tbody>
@@ -164,42 +200,6 @@ export default async function AdminLinksPage({
           )}
         </div>
       </section>
-
-      <aside className={styles.panel}>
-        <header className={styles.panelHeader}>
-          <h2 className={styles.title} style={{ fontSize: 22 }}>
-            Create Slug
-          </h2>
-          <p className={styles.sub}>Slugs are lowercased. Only letters, digits, “-”, “_”.</p>
-        </header>
-
-        <form className={styles.form} action={createSlug}>
-          <label className={styles.label}>
-            <span className={styles.labelText}>Slug</span>
-            <input className={styles.input} name="slug" placeholder="docs" required />
-          </label>
-          <label className={styles.label}>
-            <span className={styles.labelText}>First Destination URL</span>
-            <input
-              className={styles.input}
-              name="destination"
-              placeholder="https://example.com/somewhere"
-              required
-            />
-          </label>
-          <button className={styles.create} type="submit">
-            Create Link
-          </button>
-        </form>
-
-        <div className={styles.note}>
-          <div className={styles.noteTitle}>Performance boundary</div>
-          <p className={styles.noteText}>
-            Redirects resolve in <span className={styles.pill}>Edge</span> with 1 KV read + 1 KV
-            counter increment (round-robin). Analytics counters are fire-and-forget.
-          </p>
-        </div>
-      </aside>
     </div>
   );
 }
