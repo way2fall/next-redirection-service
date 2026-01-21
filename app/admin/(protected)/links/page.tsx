@@ -10,7 +10,7 @@ export const runtime = "nodejs";
 function fmtDate(iso: string) {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleString();
+  return d.toLocaleString("zh-CN");
 }
 
 function normalizeBaseUrl(raw: string) {
@@ -48,18 +48,18 @@ export default async function AdminLinksPage({
       <aside className={styles.panel}>
         <header className={styles.panelHeader}>
           <h2 className={styles.title} style={{ fontSize: 22 }}>
-            Create Slug
+            创建短链
           </h2>
-          <p className={styles.sub}>Slugs are lowercased. Only letters, digits, “-”, “_”.</p>
+          <p className={styles.sub}>slug 会自动转为小写。仅允许字母、数字、“-”、“_”。</p>
         </header>
 
         <form className={styles.form} action={createSlug}>
           <label className={styles.label}>
-            <span className={styles.labelText}>Slug</span>
+            <span className={styles.labelText}>短码</span>
             <input className={styles.input} name="slug" placeholder="docs" required />
           </label>
           <label className={styles.label}>
-            <span className={styles.labelText}>First Destination URL</span>
+            <span className={styles.labelText}>首个目标 URL</span>
             <input
               className={styles.input}
               name="destination"
@@ -68,24 +68,24 @@ export default async function AdminLinksPage({
             />
           </label>
           <button className={styles.create} type="submit">
-            Create Link
+            创建链接
           </button>
         </form>
 
         <div className={styles.note}>
-          <div className={styles.noteTitle}>Performance boundary</div>
+          <div className={styles.noteTitle}>性能边界</div>
           <p className={styles.noteText}>
-            Redirects resolve in <span className={styles.pill}>Edge</span> with 1 KV read + 1 KV
-            counter increment (round-robin). Analytics counters are fire-and-forget.
+            重定向在 <span className={styles.pill}>Edge</span> 上完成：1 次 KV 读取 + 1 次 KV 计数器递增（轮询）。
+            统计计数为异步处理，不会阻塞重定向。
           </p>
         </div>
       </aside>
 
       <section className={styles.panel}>
         <header className={styles.panelHeader}>
-          <h1 className={styles.title}>Slugs</h1>
+          <h1 className={styles.title}>短链列表</h1>
           <p className={styles.sub}>
-            Each slug can have multiple destinations with round-robin routing (Edge 302).
+            每个 slug 可配置多个目标地址，并通过轮询路由（Edge 302）。
           </p>
         </header>
 
@@ -98,45 +98,45 @@ export default async function AdminLinksPage({
           <div className={styles.banner} data-tone="ok">
             <span className={styles.bannerMark}>+</span>
             <span>
-              Created <code className={styles.code}>/{created}</code>
+              已创建 <code className={styles.code}>/{created}</code>
             </span>
           </div>
         ) : deleted ? (
           <div className={styles.banner} data-tone="ok">
             <span className={styles.bannerMark}>−</span>
             <span>
-              Deleted <code className={styles.code}>/{deleted}</code>
+              已删除 <code className={styles.code}>/{deleted}</code>
             </span>
           </div>
         ) : updated ? (
           <div className={styles.banner} data-tone="ok">
             <span className={styles.bannerMark}>↻</span>
             <span>
-              Updated <code className={styles.code}>/{updated}</code>
+              已更新 <code className={styles.code}>/{updated}</code>
             </span>
           </div>
         ) : reset ? (
           <div className={styles.banner} data-tone="ok">
             <span className={styles.bannerMark}>0</span>
             <span>
-              Reset clicks for <code className={styles.code}>/{reset}</code>
+              已重置 <code className={styles.code}>/{reset}</code> 的点击数
             </span>
           </div>
         ) : null}
 
         <div className={styles.tableWrap}>
           {slugs.length === 0 ? (
-            <div className={styles.empty}>No slugs yet. Create your first short link above.</div>
+            <div className={styles.empty}>暂无 slug。请在左侧创建你的第一个短链。</div>
           ) : (
             <table className={styles.table}>
               <thead>
                 <tr>
-                  <th>Slug</th>
-                  <th>Redirection Link</th>
-                  <th>Status</th>
-                  <th>Created</th>
-                  <th>Clicks</th>
-                  <th>Destinations</th>
+                  <th>短码</th>
+                  <th>重定向链接</th>
+                  <th>状态</th>
+                  <th>创建时间</th>
+                  <th>点击数</th>
+                  <th>目标数</th>
                   <th />
                 </tr>
               </thead>
@@ -164,7 +164,7 @@ export default async function AdminLinksPage({
                             className={`${styles.toggle} ${s.enabled ? styles.toggleOn : styles.toggleOff}`}
                             type="submit"
                           >
-                            {s.enabled ? "Enabled" : "Disabled"}
+                            {s.enabled ? "启用" : "停用"}
                           </button>
                         </form>
                       </td>
@@ -176,18 +176,18 @@ export default async function AdminLinksPage({
                       <td className={styles.actions}>
                         <div className={styles.actionRow}>
                           <Link className={styles.actionBtn} href={`/admin/links/${encodeURIComponent(s.slug)}`}>
-                            Manage
+                            管理
                           </Link>
                           <form action={resetSlugClickCount}>
                             <input type="hidden" name="slug" value={s.slug} />
                             <button className={`${styles.actionBtn} ${styles.reset}`} type="submit">
-                              Reset
+                              重置
                             </button>
                           </form>
                           <form action={deleteSlug}>
                             <input type="hidden" name="slug" value={s.slug} />
                             <button className={`${styles.actionBtn} ${styles.delete}`} type="submit">
-                              Delete
+                              删除
                             </button>
                           </form>
                         </div>

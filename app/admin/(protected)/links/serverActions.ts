@@ -6,8 +6,10 @@ import { getKv } from "@/lib/storage";
 
 function actionErrorMessage(err: unknown) {
   const msg = err instanceof Error ? err.message : "";
-  if (msg === "Slug already exists." || msg === "Slug not found." || msg === "Upstash env vars not configured.") return msg;
-  return "Storage temporarily unavailable. Please try again.";
+  if (msg === "Slug already exists.") return "该短码已存在。";
+  if (msg === "Slug not found.") return "未找到该短码。";
+  if (msg === "Upstash env vars not configured.") return "未配置 Upstash 环境变量。";
+  return "存储暂时不可用，请稍后再试。";
 }
 
 function normalizeSlug(raw: string) {
@@ -45,15 +47,15 @@ export async function createSlug(formData: FormData) {
   const slug = normalizeSlug(String(formData.get("slug") ?? ""));
   const destinationRaw = String(formData.get("destination") ?? "");
 
-  if (!slug || !destinationRaw) redirect("/admin/links?error=Missing%20fields.");
-  if (!isValidSlug(slug)) redirect("/admin/links?error=Invalid%20slug%20format.");
-  if (isReservedSlug(slug)) redirect("/admin/links?error=Slug%20is%20reserved.");
+  if (!slug || !destinationRaw) redirect(`/admin/links?error=${encodeURIComponent("缺少字段。")}`);
+  if (!isValidSlug(slug)) redirect(`/admin/links?error=${encodeURIComponent("短码格式无效。")}`);
+  if (isReservedSlug(slug)) redirect(`/admin/links?error=${encodeURIComponent("该短码为保留项。")}`);
 
   let destination: string;
   try {
     destination = validateDestination(destinationRaw);
   } catch {
-    redirect("/admin/links?error=Invalid%20destination%20URL.");
+    redirect(`/admin/links?error=${encodeURIComponent("目标 URL 无效。")}`);
   }
 
   let exists: Awaited<ReturnType<typeof kv.getSlug>> | null = null;
@@ -62,7 +64,7 @@ export async function createSlug(formData: FormData) {
   } catch (err) {
     redirect(`/admin/links?error=${encodeURIComponent(actionErrorMessage(err))}`);
   }
-  if (exists) redirect("/admin/links?error=Slug%20already%20exists.");
+  if (exists) redirect(`/admin/links?error=${encodeURIComponent("该短码已存在。")}`);
 
   try {
     await kv.createSlug({ slug, destinationUrl: destination });
@@ -77,7 +79,7 @@ export async function deleteSlug(formData: FormData) {
   const kv = getKv();
 
   const slug = normalizeSlug(String(formData.get("slug") ?? ""));
-  if (!slug) redirect("/admin/links?error=Missing%20slug.");
+  if (!slug) redirect(`/admin/links?error=${encodeURIComponent("缺少短码。")}`);
 
   try {
     await kv.deleteSlug(slug);
@@ -94,7 +96,7 @@ export async function setSlugEnabled(formData: FormData) {
   const slug = normalizeSlug(String(formData.get("slug") ?? ""));
   const enabledRaw = String(formData.get("enabled") ?? "");
   const enabled = enabledRaw === "1" || enabledRaw === "true";
-  if (!slug) redirect("/admin/links?error=Missing%20slug.");
+  if (!slug) redirect(`/admin/links?error=${encodeURIComponent("缺少短码。")}`);
 
   try {
     await kv.setSlugEnabled(slug, enabled);
@@ -109,7 +111,7 @@ export async function resetSlugClickCount(formData: FormData) {
   const kv = getKv();
 
   const slug = normalizeSlug(String(formData.get("slug") ?? ""));
-  if (!slug) redirect("/admin/links?error=Missing%20slug.");
+  if (!slug) redirect(`/admin/links?error=${encodeURIComponent("缺少短码。")}`);
 
   try {
     await kv.resetSlugClickCount(slug);

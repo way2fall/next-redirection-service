@@ -27,7 +27,7 @@ async function getPublicBaseUrl() {
 function fmtDate(iso: string) {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleString();
+  return d.toLocaleString("zh-CN");
 }
 
 export default async function SlugDetailPage({
@@ -41,7 +41,7 @@ export default async function SlugDetailPage({
   const { error, updated } = await searchParams;
   const kv = getKv();
   const details = await kv.getSlugDetails(slug);
-  if (!details) redirect(`/admin/links?error=${encodeURIComponent("Slug not found.")}`);
+  if (!details) redirect(`/admin/links?error=${encodeURIComponent("未找到该短码。")}`);
 
   const baseUrl = await getPublicBaseUrl();
   const shortUrl = baseUrl ? `${baseUrl}/${details.slug}` : `/${details.slug}`;
@@ -51,31 +51,31 @@ export default async function SlugDetailPage({
       <aside className={tableStyles.panel}>
         <header className={tableStyles.panelHeader}>
           <h2 className={tableStyles.title} style={{ fontSize: 22 }}>
-            Add Destination
+            添加目标地址
           </h2>
-          <p className={tableStyles.sub}>New destinations join the round-robin immediately if enabled.</p>
+          <p className={tableStyles.sub}>启用后，新目标会立刻加入轮询。</p>
         </header>
 
         <form className={tableStyles.form} action={addDestination}>
           <input type="hidden" name="slug" value={details.slug} />
           <label className={tableStyles.label}>
-            <span className={tableStyles.labelText}>Destination URL</span>
+            <span className={tableStyles.labelText}>目标 URL</span>
             <input className={tableStyles.input} name="url" placeholder="https://example.com/landing" required />
           </label>
           <button className={tableStyles.create} type="submit">
-            Add Destination
+            添加
           </button>
         </form>
 
         <div className={tableStyles.note}>
-          <div className={tableStyles.noteTitle}>Fallback</div>
+          <div className={tableStyles.noteTitle}>兜底页</div>
           <p className={tableStyles.noteText}>
-            If the slug is disabled (or all destinations are disabled), traffic is redirected to{" "}
-            <code className={tableStyles.code}>/fallback</code>. Customize it in{" "}
+            当 slug 被停用（或所有目标都停用）时，流量会重定向到 <code className={tableStyles.code}>/fallback</code>。
+            可在{" "}
             <Link className={tableStyles.destLink} href="/admin/fallback">
-              admin fallback editor
+              管理端兜底页编辑器
             </Link>
-            .
+            中自定义。
           </p>
         </div>
       </aside>
@@ -86,8 +86,8 @@ export default async function SlugDetailPage({
             <code className={tableStyles.code}>/{details.slug}</code>
           </h1>
           <p className={tableStyles.sub}>
-            Round-robin redirect across enabled destinations. Disable the slug (or all destinations) to send traffic to{" "}
-            <code className={tableStyles.code}>/fallback</code>.
+            对已启用的目标进行轮询重定向。停用该 slug（或停用所有目标）即可将流量发送到{" "}
+            <code className={tableStyles.code}>/fallback</code>。
           </p>
         </header>
 
@@ -105,7 +105,7 @@ export default async function SlugDetailPage({
 
         <div className={styles.meta}>
           <div className={styles.metaRow}>
-            <div className={styles.metaLabel}>Redirection link</div>
+            <div className={styles.metaLabel}>重定向链接</div>
             <div className={styles.metaValue}>
               <a className={tableStyles.destLink} href={shortUrl} target="_blank" rel="noreferrer">
                 {shortUrl}
@@ -114,15 +114,15 @@ export default async function SlugDetailPage({
             </div>
           </div>
           <div className={styles.metaRow}>
-            <div className={styles.metaLabel}>Created</div>
+            <div className={styles.metaLabel}>创建时间</div>
             <div className={styles.metaValue}>{fmtDate(details.createdAt)}</div>
           </div>
           <div className={styles.metaRow}>
-            <div className={styles.metaLabel}>Total clicks</div>
+            <div className={styles.metaLabel}>总点击数</div>
             <div className={styles.metaValue}>{details.totalClickCount}</div>
           </div>
           <div className={styles.metaRow}>
-            <div className={styles.metaLabel}>Round-robin cursor</div>
+            <div className={styles.metaLabel}>轮询游标</div>
             <div className={styles.metaValue}>{details.roundRobinCursor}</div>
           </div>
           <div className={styles.metaActions}>
@@ -133,17 +133,17 @@ export default async function SlugDetailPage({
                 className={`${tableStyles.toggle} ${details.enabled ? tableStyles.toggleOn : tableStyles.toggleOff}`}
                 type="submit"
               >
-                {details.enabled ? "Enabled" : "Disabled"}
+                {details.enabled ? "启用" : "停用"}
               </button>
             </form>
             <form action={resetSlugClickCount}>
               <input type="hidden" name="slug" value={details.slug} />
               <button className={`${tableStyles.actionBtn} ${tableStyles.reset}`} type="submit">
-                Reset slug clicks
+                重置 slug 点击数
               </button>
             </form>
             <Link className={tableStyles.actionBtn} href="/admin/links">
-              Back to list
+              返回列表
             </Link>
           </div>
         </div>
@@ -152,10 +152,10 @@ export default async function SlugDetailPage({
           <table className={tableStyles.table}>
             <thead>
               <tr>
-                <th>Destination URL</th>
-                <th>Status</th>
-                <th>Created</th>
-                <th>Clicks</th>
+                <th>目标 URL</th>
+                <th>状态</th>
+                <th>创建时间</th>
+                <th>点击数</th>
                 <th />
               </tr>
             </thead>
@@ -166,7 +166,7 @@ export default async function SlugDetailPage({
                     <a className={tableStyles.destLink} href={d.url} target="_blank" rel="noreferrer">
                       {d.url}
                     </a>
-                    <div className={styles.destId}>id: {d.id}</div>
+                    <div className={styles.destId}>ID：{d.id}</div>
                   </td>
                   <td>
                     <form action={setDestinationEnabled} className={tableStyles.inlineForm}>
@@ -177,7 +177,7 @@ export default async function SlugDetailPage({
                         className={`${tableStyles.toggle} ${d.enabled ? tableStyles.toggleOn : tableStyles.toggleOff}`}
                         type="submit"
                       >
-                        {d.enabled ? "Enabled" : "Disabled"}
+                        {d.enabled ? "启用" : "停用"}
                       </button>
                     </form>
                   </td>

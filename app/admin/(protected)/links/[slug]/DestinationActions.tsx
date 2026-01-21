@@ -39,7 +39,7 @@ export default function DestinationActions({
           type="button"
           onClick={openDialog}
         >
-          Edit
+          编辑
         </button>
         <form action={resetDestinationClickCount}>
           <input type="hidden" name="slug" value={slug} />
@@ -48,13 +48,13 @@ export default function DestinationActions({
             className={`${tableStyles.actionBtn} ${tableStyles.reset}`}
             type="submit"
           >
-            Reset
+            重置
           </button>
         </form>
         <form
           action={deleteDestination}
           onSubmit={(e) => {
-            if (!confirm("Delete this destination URL?")) e.preventDefault();
+            if (!confirm("确定删除这个目标 URL 吗？")) e.preventDefault();
           }}
         >
           <input type="hidden" name="slug" value={slug} />
@@ -63,7 +63,7 @@ export default function DestinationActions({
             className={`${tableStyles.actionBtn} ${tableStyles.delete}`}
             type="submit"
           >
-            Delete
+            删除
           </button>
         </form>
       </div>
@@ -78,13 +78,13 @@ export default function DestinationActions({
       >
         <header className={styles.dialogHeader}>
           <div className={styles.dialogTitle} id={titleId}>
-            Edit destination URL
+            编辑目标 URL
           </div>
           <button
             className={styles.dialogClose}
             type="button"
             onClick={closeDialog}
-            aria-label="Close"
+            aria-label="关闭"
           >
             ×
           </button>
@@ -94,7 +94,7 @@ export default function DestinationActions({
           <input type="hidden" name="slug" value={slug} />
           <input type="hidden" name="destinationId" value={destinationId} />
           <label className={tableStyles.label}>
-            <span className={tableStyles.labelText}>Destination URL</span>
+            <span className={tableStyles.labelText}>目标 URL</span>
             <input
               className={tableStyles.input}
               name="url"
@@ -111,10 +111,10 @@ export default function DestinationActions({
               type="button"
               onClick={closeDialog}
             >
-              Cancel
+              取消
             </button>
             <button className={tableStyles.actionBtn} type="submit">
-              Save
+              保存
             </button>
           </div>
         </form>

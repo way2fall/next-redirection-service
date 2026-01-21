@@ -3,11 +3,11 @@ import { getKv } from "@/lib/storage";
 export const runtime = "edge";
 
 const DEFAULT_FALLBACK_HTML = `<!doctype html>
-<html lang="en">
+<html lang="zh-CN">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Link unavailable</title>
+    <title>链接不可用</title>
     <style>
       :root{color-scheme:dark;--bg:#07070a;--fg:rgba(255,255,255,.92);--mut:rgba(255,255,255,.62);--line:rgba(255,255,255,.14);--a:#f7c948;--b:#78e3ff}
       html,body{height:100%}
@@ -30,10 +30,10 @@ const DEFAULT_FALLBACK_HTML = `<!doctype html>
   </head>
   <body>
     <main class="card">
-      <h1>Link unavailable</h1>
-      <p>This short link is currently disabled or has no active destinations.</p>
-      <div class="pill">slug: <span id="slug">{{slug}}</span></div>
-      <p class="hint">If you manage this link, open <a href="/admin">/admin</a> to re-enable it.</p>
+      <h1>链接不可用</h1>
+      <p>该短链当前已停用，或没有任何启用的目标地址。</p>
+      <div class="pill">短码：<span id="slug">{{slug}}</span></div>
+      <p class="hint">如果你管理此链接，请打开 <a href="/admin">/admin</a> 重新启用。</p>
       <div class="glow" aria-hidden="true"></div>
     </main>
     <script>

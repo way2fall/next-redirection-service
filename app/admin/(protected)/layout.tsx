@@ -14,20 +14,20 @@ export default async function ProtectedAdminLayout({ children }: { children: Rea
         <div className={styles.brand}>
           <div className={styles.brandMark} aria-hidden="true" />
           <div>
-            <div className={styles.brandTitle}>Registry Console</div>
-            <div className={styles.brandSub}>single-admin • kv-backed</div>
+            <div className={styles.brandTitle}>管理控制台</div>
+            <div className={styles.brandSub}>单管理员 • KV 存储</div>
           </div>
         </div>
         <nav className={styles.nav}>
           <Link className={styles.navLink} href="/admin/links">
-            Links
+            链接
           </Link>
           <Link className={styles.navLink} href="/admin/fallback">
-            Fallback
+            兜底页
           </Link>
           <form action={logout}>
             <button className={styles.navButton} type="submit">
-              Logout
+              退出登录
             </button>
           </form>
         </nav>

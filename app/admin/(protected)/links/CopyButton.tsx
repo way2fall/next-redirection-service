@@ -27,8 +27,7 @@ export default function CopyButton({ text }: { text: string }) {
         }
       }}
     >
-      {state === "copied" ? "Copied" : state === "error" ? "Copy failed" : "Copy"}
+      {state === "copied" ? "已复制" : state === "error" ? "复制失败" : "复制"}
     </button>
   );
 }
-

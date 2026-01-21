@@ -41,7 +41,7 @@ export async function GET(
   const reso = await resolveRedirectForSlug(slug, { track: shouldCountRedirectClick(request) });
 
   if (reso.kind === "not_found") {
-    return withNoStore(new Response("Not found", { status: 404 }));
+    return withNoStore(new Response("未找到", { status: 404 }));
   }
 
   if (reso.kind === "fallback") {

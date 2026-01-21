@@ -15,11 +15,11 @@ export default async function AdminLoginPage({
   const { error } = await searchParams;
   const errorText =
     error === "invalid"
-      ? "Invalid username or password."
+      ? "用户名或密码不正确。"
       : error === "misconfigured"
-        ? "Admin auth is not configured on this deployment. Set ADMIN_USERNAME, ADMIN_PASSWORD_HASH, and SESSION_SECRET."
+        ? "此部署未配置管理员认证。请设置 ADMIN_USERNAME、ADMIN_PASSWORD_HASH 和 SESSION_SECRET。"
         : error
-          ? "Login failed."
+          ? "登录失败。"
           : null;
 
   return (
@@ -27,10 +27,10 @@ export default async function AdminLoginPage({
       <div className={styles.backplate} aria-hidden="true" />
       <section className={styles.panel}>
         <header className={styles.header}>
-          <p className={styles.kicker}>Admin Access</p>
-          <h1 className={styles.title}>Link Registry</h1>
+          <p className={styles.kicker}>管理员访问</p>
+          <h1 className={styles.title}>链接管理</h1>
           <p className={styles.sub}>
-            Single-user instance. Sessions are server-only; credentials live in env vars.
+            单用户实例。会话仅在服务器端；凭据存放在环境变量中。
           </p>
         </header>
 
@@ -43,7 +43,7 @@ export default async function AdminLoginPage({
 
         <form className={styles.form} action={login}>
           <label className={styles.label}>
-            <span className={styles.labelText}>Username</span>
+            <span className={styles.labelText}>用户名</span>
             <input
               name="username"
               autoComplete="username"
@@ -54,7 +54,7 @@ export default async function AdminLoginPage({
           </label>
 
           <label className={styles.label}>
-            <span className={styles.labelText}>Password</span>
+            <span className={styles.labelText}>密码</span>
             <input
               name="password"
               type="password"
@@ -66,7 +66,7 @@ export default async function AdminLoginPage({
           </label>
 
           <button className={styles.button} type="submit">
-            Enter Console
+            进入控制台
             <span className={styles.buttonArrow} aria-hidden="true">
               →
             </span>
@@ -74,8 +74,7 @@ export default async function AdminLoginPage({
         </form>
 
         <footer className={styles.footer}>
-          <span className={styles.footerHint}>Tip:</span> Use a strong session secret and a bcrypt
-          hash for the admin password.
+          <span className={styles.footerHint}>提示：</span>使用强随机的会话密钥，并为管理员密码使用 bcrypt 哈希。
         </footer>
       </section>
     </main>

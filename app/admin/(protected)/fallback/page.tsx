@@ -12,18 +12,18 @@ export default async function AdminFallbackPage() {
     <section className={styles.panel}>
       <header className={styles.header}>
         <div>
-          <h1 className={styles.title}>Fallback Page</h1>
+          <h1 className={styles.title}>兜底页</h1>
           <p className={styles.sub}>
-            Served publicly at <code className={styles.code}>/fallback</code>. Store raw HTML/CSS/JS.
+            对外公开访问路径为 <code className={styles.code}>/fallback</code>。可保存原始 HTML/CSS/JS。
           </p>
         </div>
         <div className={styles.headerActions}>
           <a className={styles.preview} href="/fallback" target="_blank" rel="noreferrer">
-            Preview
+            预览
           </a>
           <form action={resetFallback}>
             <button className={styles.reset} type="submit">
-              Reset to default
+              恢复默认
             </button>
           </form>
         </div>
@@ -34,19 +34,18 @@ export default async function AdminFallbackPage() {
           className={styles.textarea}
           name="html"
           spellCheck={false}
-          placeholder="Paste full HTML here (<!doctype html> ...). Leave empty to use the built-in default."
+          placeholder="在此粘贴完整 HTML（<!doctype html> ...）。留空则使用内置默认页面。"
           defaultValue={current}
         />
         <div className={styles.footer}>
           <div className={styles.warn}>
-            This HTML is served to the public. Only paste code you trust.
+            此 HTML 会公开对外提供。只粘贴你信任的代码。
           </div>
           <button className={styles.save} type="submit">
-            Save
+            保存
           </button>
         </div>
       </form>
     </section>
   );
 }
-
