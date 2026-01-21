@@ -13,10 +13,14 @@ export type RedirectResolution =
   | { kind: "fallback"; reason: "slug_disabled" | "all_destinations_disabled" }
   | { kind: "redirect"; url: string; destinationId: string };
 
-export async function resolveRedirectForSlug(slugRaw: string): Promise<RedirectResolution> {
+export async function resolveRedirectForSlug(
+  slugRaw: string,
+  options?: { track?: boolean }
+): Promise<RedirectResolution> {
   const slug = normalizeSlug(slugRaw);
   if (!slug || !isValidSlug(slug)) return { kind: "not_found" };
 
+  const track = options?.track !== false;
   const kv = getKv();
   const config = await kv.getRedirectConfig(slug);
   if (!config) return { kind: "not_found" };
@@ -26,7 +30,7 @@ export async function resolveRedirectForSlug(slugRaw: string): Promise<RedirectR
   if (enabled.length === 0) return { kind: "fallback", reason: "all_destinations_disabled" };
 
   let chosen: { id: string; url: string } | null = null;
-  if (enabled.length === 1) {
+  if (!track || enabled.length === 1) {
     chosen = { id: enabled[0]!.id, url: enabled[0]!.url };
   } else {
     const cursor = await kv.nextRoundRobinCursor(slug);
@@ -49,7 +53,8 @@ export async function resolveRedirectForSlug(slugRaw: string): Promise<RedirectR
     return { kind: "not_found" };
   }
 
-  // Best-effort analytics: do not block redirect on click tracking.
-  void kv.recordClick(slug, chosen.id).catch(() => {});
+  if (track) {
+    void kv.recordClick(slug, chosen.id).catch(() => {});
+  }
   return { kind: "redirect", url: chosen.url, destinationId: chosen.id };
 }
