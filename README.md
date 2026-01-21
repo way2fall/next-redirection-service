@@ -46,7 +46,12 @@ lib/
   "enabled": true,
   "createdAt": "2026-01-20T00:00:00.000Z",
   "destinations": [
-    { "id": "uuid", "url": "https://example.com", "enabled": true, "createdAt": "..." }
+    {
+      "id": "uuid",
+      "url": "https://example.com",
+      "enabled": true,
+      "createdAt": "..."
+    }
   ]
 }
 ```
@@ -84,12 +89,13 @@ See `.env.example`.
 
 ## Running locally
 
-1) Install deps: `npm install`
-2) Create `.env` from `.env.example`
-3) Generate a bcrypt hash (example): `npm run hash-admin-password -- "your password"`
-4) Start: `npm run dev`
+1. Install deps: `npm install`
+2. Create `.env` from `.env.example`
+3. Generate a bcrypt hash (example): `npm run hash-admin-password -- "your password"`
+4. Start: `npm run dev`
 
 If login fails locally, ensure:
+
 - You’re typing the exact `ADMIN_USERNAME` value (not the placeholder).
 - `ADMIN_PASSWORD_HASH` includes the full bcrypt hash and `$` is escaped as `\$` in `.env`.
 - You restarted `npm run dev` after editing `.env`.
@@ -106,4 +112,4 @@ If login fails locally, ensure:
 - Admin routes are protected server-side in `app/admin/(protected)/layout.tsx` and server actions.
 - Session is a signed, expiring, HttpOnly cookie (no client-side password checks).
 - Destination URLs are validated to `http(s)` on create, and re-validated on redirect resolution.
-- If Upstash env vars are not set, the app falls back to an in-memory KV for local dev only (not compatible with Edge+Node separation in production).
+- If Upstash env vars are not set, the app falls back to an in-memory KV for local dev only (not compatible with Edge+Node separation in production)..
