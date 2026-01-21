@@ -75,6 +75,17 @@ export async function deleteDestination(formData: FormData) {
   redirect(`/admin/links/${encodeURIComponent(slug)}?updated=${encodeURIComponent("Destination deleted.")}`);
 }
 
+export async function resetDestinationClickCount(formData: FormData) {
+  await requireAdmin();
+  const kv = getKv();
+  const slug = normalizeSlug(String(formData.get("slug") ?? ""));
+  const destinationId = String(formData.get("destinationId") ?? "");
+  if (!slug || !destinationId) redirect(`/admin/links/${encodeURIComponent(slug)}?error=Missing%20fields.`);
+
+  await kv.resetDestinationClickCount({ slug, destinationId });
+  redirect(`/admin/links/${encodeURIComponent(slug)}?updated=${encodeURIComponent("Destination clicks reset.")}`);
+}
+
 export async function setSlugEnabled(formData: FormData) {
   await requireAdmin();
   const kv = getKv();

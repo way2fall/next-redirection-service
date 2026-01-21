@@ -5,6 +5,7 @@ import type {
   DeleteDestinationInput,
   DestinationRecord,
   EditDestinationInput,
+  ResetDestinationClickCountInput,
   SetDestinationEnabledInput,
   SlugDetails,
   SlugRecord,
@@ -375,6 +376,12 @@ export function createUpstashRestKv(): KvStore {
         ["DEL", keyDestClicks(input.slug, input.destinationId)]
       ]);
       return next;
+    },
+
+    async resetDestinationClickCount(input: ResetDestinationClickCountInput) {
+      const rec = await getSlugRecord(input.slug);
+      if (!rec) throw new Error("Slug not found.");
+      await cmd(["SET", keyDestClicks(input.slug, input.destinationId), "0"]);
     },
 
     async getFallbackHtml() {

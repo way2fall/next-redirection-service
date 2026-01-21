@@ -5,6 +5,7 @@ import type {
   DeleteDestinationInput,
   DestinationRecord,
   EditDestinationInput,
+  ResetDestinationClickCountInput,
   SetDestinationEnabledInput,
   SlugDetails,
   SlugRecord,
@@ -183,6 +184,11 @@ export function createMemoryKv(): KvStore {
       slugs.set(input.slug, next);
       destClicks.delete(keyDest(input.slug, input.destinationId));
       return next;
+    },
+
+    async resetDestinationClickCount(input: ResetDestinationClickCountInput) {
+      ensureSlug(input.slug);
+      destClicks.set(keyDest(input.slug, input.destinationId), 0);
     },
 
     async getFallbackHtml() {

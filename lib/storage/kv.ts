@@ -3,6 +3,7 @@ import type {
   CreateSlugInput,
   DeleteDestinationInput,
   EditDestinationInput,
+  ResetDestinationClickCountInput,
   SetDestinationEnabledInput,
   SlugDetails,
   SlugRecord,
@@ -30,6 +31,7 @@ export interface KvStore {
   editDestination(input: EditDestinationInput): Promise<SlugRecord>;
   setDestinationEnabled(input: SetDestinationEnabledInput): Promise<SlugRecord>;
   deleteDestination(input: DeleteDestinationInput): Promise<SlugRecord>;
+  resetDestinationClickCount(input: ResetDestinationClickCountInput): Promise<void>;
 
   getFallbackHtml(): Promise<string | null>;
   setFallbackHtml(html: string): Promise<void>;

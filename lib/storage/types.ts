@@ -59,3 +59,8 @@ export type DeleteDestinationInput = {
   slug: string;
   destinationId: string;
 };
+
+export type ResetDestinationClickCountInput = {
+  slug: string;
+  destinationId: string;
+};

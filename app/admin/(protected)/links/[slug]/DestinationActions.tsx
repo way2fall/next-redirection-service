@@ -3,12 +3,16 @@
 import { useId, useRef, useState } from "react";
 import tableStyles from "../links.module.css";
 import styles from "./slug.module.css";
-import { deleteDestination, editDestination } from "./serverActions";
+import {
+  deleteDestination,
+  editDestination,
+  resetDestinationClickCount,
+} from "./serverActions";
 
 export default function DestinationActions({
   slug,
   destinationId,
-  url
+  url,
 }: {
   slug: string;
   destinationId: string;
@@ -30,9 +34,23 @@ export default function DestinationActions({
   return (
     <>
       <div className={tableStyles.actionRow}>
-        <button className={tableStyles.actionBtn} type="button" onClick={openDialog}>
+        <button
+          className={tableStyles.actionBtn}
+          type="button"
+          onClick={openDialog}
+        >
           Edit
         </button>
+        <form action={resetDestinationClickCount}>
+          <input type="hidden" name="slug" value={slug} />
+          <input type="hidden" name="destinationId" value={destinationId} />
+          <button
+            className={`${tableStyles.actionBtn} ${tableStyles.reset}`}
+            type="submit"
+          >
+            Reset
+          </button>
+        </form>
         <form
           action={deleteDestination}
           onSubmit={(e) => {
@@ -41,7 +59,10 @@ export default function DestinationActions({
         >
           <input type="hidden" name="slug" value={slug} />
           <input type="hidden" name="destinationId" value={destinationId} />
-          <button className={`${tableStyles.actionBtn} ${tableStyles.delete}`} type="submit">
+          <button
+            className={`${tableStyles.actionBtn} ${tableStyles.delete}`}
+            type="submit"
+          >
             Delete
           </button>
         </form>
@@ -59,7 +80,12 @@ export default function DestinationActions({
           <div className={styles.dialogTitle} id={titleId}>
             Edit destination URL
           </div>
-          <button className={styles.dialogClose} type="button" onClick={closeDialog} aria-label="Close">
+          <button
+            className={styles.dialogClose}
+            type="button"
+            onClick={closeDialog}
+            aria-label="Close"
+          >
             ×
           </button>
         </header>
@@ -80,7 +106,11 @@ export default function DestinationActions({
           </label>
 
           <div className={styles.dialogActions}>
-            <button className={tableStyles.actionBtn} type="button" onClick={closeDialog}>
+            <button
+              className={tableStyles.actionBtn}
+              type="button"
+              onClick={closeDialog}
+            >
               Cancel
             </button>
             <button className={tableStyles.actionBtn} type="submit">
@@ -92,4 +122,3 @@ export default function DestinationActions({
     </>
   );
 }
-
