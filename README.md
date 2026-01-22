@@ -112,4 +112,4 @@ If login fails locally, ensure:
 - Admin routes are protected server-side in `app/admin/(protected)/layout.tsx` and server actions.
 - Session is a signed, expiring, HttpOnly cookie (no client-side password checks).
 - Destination URLs are validated to `http(s)` on create, and re-validated on redirect resolution.
-- If Upstash env vars are not set, the app falls back to an in-memory KV for local dev only (not compatible with Edge+Node separation in production)..
+- If Upstash env vars are not set, the app falls back to an in-memory KV for local dev only (not compatible with Edge+Node separation in production)...
