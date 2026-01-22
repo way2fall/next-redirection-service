@@ -163,7 +163,7 @@ export default async function SlugDetailPage({
                 className={`${tableStyles.toggle} ${details.enabled ? tableStyles.toggleOn : tableStyles.toggleOff}`}
                 type="submit"
               >
-                {details.enabled ? "启用" : "停用"}
+                {details.enabled ? "启用中" : "停用中"}
               </button>
             </form>
             <form action={resetSlugClickCount}>
@@ -226,7 +226,7 @@ export default async function SlugDetailPage({
                         className={`${tableStyles.toggle} ${d.enabled ? tableStyles.toggleOn : tableStyles.toggleOff}`}
                         type="submit"
                       >
-                        {d.enabled ? "启用" : "停用"}
+                        {d.enabled ? "启用中" : "停用中"}
                       </button>
                     </form>
                   </td>

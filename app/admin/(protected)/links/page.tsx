@@ -202,7 +202,7 @@ export default async function AdminLinksPage({
                             className={`${styles.toggle} ${s.enabled ? styles.toggleOn : styles.toggleOff}`}
                             type="submit"
                           >
-                            {s.enabled ? "启用" : "停用"}
+                            {s.enabled ? "启用中" : "停用中"}
                           </button>
                         </form>
                       </td>
