@@ -18,7 +18,7 @@ export default async function ProtectedAdminLayout({
         <div className={styles.brand}>
           <div className={styles.brandMark} aria-hidden="true" />
           <div>
-            <div className={styles.brandTitle}>管理控制台</div>
+            <div className={styles.brandTitle}>大富豪分流器</div>
             <div className={styles.brandSub}>单管理员 • KV 存储</div>
           </div>
         </div>
