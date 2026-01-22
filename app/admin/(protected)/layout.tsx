@@ -24,7 +24,7 @@ export default async function ProtectedAdminLayout({
         </div>
         <nav className={styles.nav}>
           <Link className={styles.navLink} href="/admin/links">
-            链接
+            所有链接
           </Link>
           <Link className={styles.navLink} href="/admin/fallback">
             斗篷页
