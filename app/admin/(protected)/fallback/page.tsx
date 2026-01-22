@@ -12,13 +12,19 @@ export default async function AdminFallbackPage() {
     <section className={styles.panel}>
       <header className={styles.header}>
         <div>
-          <h1 className={styles.title}>兜底页</h1>
+          <h1 className={styles.title}>斗篷页</h1>
           <p className={styles.sub}>
-            对外公开访问路径为 <code className={styles.code}>/fallback</code>。可保存原始 HTML/CSS/JS。
+            对外公开访问路径为 <code className={styles.code}>/fallback</code>
+            。可保存原始 HTML/CSS/JS。
           </p>
         </div>
         <div className={styles.headerActions}>
-          <a className={styles.preview} href="/fallback" target="_blank" rel="noreferrer">
+          <a
+            className={styles.preview}
+            href="/fallback"
+            target="_blank"
+            rel="noreferrer"
+          >
             预览
           </a>
           <form action={resetFallback}>

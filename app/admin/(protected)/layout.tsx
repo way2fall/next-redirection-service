@@ -5,7 +5,11 @@ import { logout } from "./serverActions";
 
 export const runtime = "nodejs";
 
-export default async function ProtectedAdminLayout({ children }: { children: React.ReactNode }) {
+export default async function ProtectedAdminLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   await requireAdmin();
 
   return (
@@ -23,7 +27,7 @@ export default async function ProtectedAdminLayout({ children }: { children: Rea
             链接
           </Link>
           <Link className={styles.navLink} href="/admin/fallback">
-            兜底页
+            斗篷页
           </Link>
           <form action={logout}>
             <button className={styles.navButton} type="submit">

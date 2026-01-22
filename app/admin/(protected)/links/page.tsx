@@ -1,6 +1,11 @@
 import styles from "./links.module.css";
 import { getKv } from "@/lib/storage";
-import { createSlug, deleteSlug, resetSlugClickCount, setSlugEnabled } from "./serverActions";
+import {
+  createSlug,
+  deleteSlug,
+  resetSlugClickCount,
+  setSlugEnabled,
+} from "./serverActions";
 import { headers } from "next/headers";
 import Link from "next/link";
 import CopyButton from "./CopyButton";
@@ -28,7 +33,7 @@ async function getPublicBaseUrl() {
 }
 
 export default async function AdminLinksPage({
-  searchParams
+  searchParams,
 }: {
   searchParams: Promise<{
     created?: string;
@@ -50,17 +55,29 @@ export default async function AdminLinksPage({
           <h2 className={styles.title} style={{ fontSize: 22 }}>
             创建短链
           </h2>
-          <p className={styles.sub}>slug 会自动转为小写。仅允许字母、数字、“-”、“_”。</p>
+          <p className={styles.sub}>
+            slug 会自动转为小写。仅允许字母、数字、“-”、“_”。
+          </p>
         </header>
 
         <form className={styles.form} action={createSlug}>
           <label className={styles.label}>
             <span className={styles.labelText}>短码</span>
-            <input className={styles.input} name="slug" placeholder="docs" required />
+            <input
+              className={styles.input}
+              name="slug"
+              placeholder="docs"
+              required
+            />
           </label>
           <label className={styles.label}>
             <span className={styles.labelText}>首个链接名称</span>
-            <input className={styles.input} name="destinationName" placeholder="例如：官网 / 落地页 A" required />
+            <input
+              className={styles.input}
+              name="destinationName"
+              placeholder="例如：工单 1 / 落地页 A"
+              required
+            />
           </label>
           <label className={styles.label}>
             <span className={styles.labelText}>首个目标 URL</span>
@@ -79,7 +96,8 @@ export default async function AdminLinksPage({
         <div className={styles.note}>
           <div className={styles.noteTitle}>性能边界</div>
           <p className={styles.noteText}>
-            重定向在 <span className={styles.pill}>Edge</span> 上完成：1 次 KV 读取 + 1 次 KV 计数器递增（轮询）。
+            重定向在 <span className={styles.pill}>Edge</span> 上完成：1 次 KV
+            读取 + 1 次 KV 计数器递增（轮询）。
             统计计数为异步处理，不会阻塞重定向。
           </p>
         </div>
@@ -130,7 +148,9 @@ export default async function AdminLinksPage({
 
         <div className={styles.tableWrap}>
           {slugs.length === 0 ? (
-            <div className={styles.empty}>暂无 slug。请在左侧创建你的第一个短链。</div>
+            <div className={styles.empty}>
+              暂无 slug。请在左侧创建你的第一个短链。
+            </div>
           ) : (
             <table className={styles.table}>
               <thead>
@@ -146,7 +166,9 @@ export default async function AdminLinksPage({
               </thead>
               <tbody>
                 {slugs.map((s) => {
-                  const shortUrl = baseUrl ? `${baseUrl}/${s.slug}` : `/${s.slug}`;
+                  const shortUrl = baseUrl
+                    ? `${baseUrl}/${s.slug}`
+                    : `/${s.slug}`;
                   return (
                     <tr key={s.slug}>
                       <td>
@@ -154,16 +176,28 @@ export default async function AdminLinksPage({
                       </td>
                       <td className={styles.dest}>
                         <div className={styles.linkCell}>
-                          <a className={styles.destLink} href={shortUrl} target="_blank" rel="noreferrer">
+                          <a
+                            className={styles.destLink}
+                            href={shortUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
                             {shortUrl}
                           </a>
                           <CopyButton text={shortUrl} />
                         </div>
                       </td>
                       <td>
-                        <form action={setSlugEnabled} className={styles.inlineForm}>
+                        <form
+                          action={setSlugEnabled}
+                          className={styles.inlineForm}
+                        >
                           <input type="hidden" name="slug" value={s.slug} />
-                          <input type="hidden" name="enabled" value={s.enabled ? "0" : "1"} />
+                          <input
+                            type="hidden"
+                            name="enabled"
+                            value={s.enabled ? "0" : "1"}
+                          />
                           <button
                             className={`${styles.toggle} ${s.enabled ? styles.toggleOn : styles.toggleOff}`}
                             type="submit"
@@ -179,18 +213,27 @@ export default async function AdminLinksPage({
                       </td>
                       <td className={styles.actions}>
                         <div className={styles.actionRow}>
-                          <Link className={styles.actionBtn} href={`/admin/links/${encodeURIComponent(s.slug)}`}>
+                          <Link
+                            className={styles.actionBtn}
+                            href={`/admin/links/${encodeURIComponent(s.slug)}`}
+                          >
                             管理
                           </Link>
                           <form action={resetSlugClickCount}>
                             <input type="hidden" name="slug" value={s.slug} />
-                            <button className={`${styles.actionBtn} ${styles.reset}`} type="submit">
+                            <button
+                              className={`${styles.actionBtn} ${styles.reset}`}
+                              type="submit"
+                            >
                               重置
                             </button>
                           </form>
                           <form action={deleteSlug}>
                             <input type="hidden" name="slug" value={s.slug} />
-                            <button className={`${styles.actionBtn} ${styles.delete}`} type="submit">
+                            <button
+                              className={`${styles.actionBtn} ${styles.delete}`}
+                              type="submit"
+                            >
                               删除
                             </button>
                           </form>
