@@ -16,6 +16,16 @@ function nowIso() {
   return new Date().toISOString();
 }
 
+function fallbackDestinationName(urlRaw: string) {
+  try {
+    const url = new URL(urlRaw);
+    const path = url.pathname && url.pathname !== "/" ? url.pathname : "";
+    return `${url.hostname}${path}` || urlRaw;
+  } catch {
+    return urlRaw;
+  }
+}
+
 function makeId() {
   return `d_${Math.random().toString(36).slice(2, 10)}${Math.random().toString(36).slice(2, 10)}`;
 }
@@ -69,6 +79,7 @@ export function createMemoryKv(): KvStore {
       const createdAt = nowIso();
       const destination: DestinationRecord = {
         id: makeId(),
+        name: fallbackDestinationName(input.destinationUrl),
         url: input.destinationUrl,
         enabled: true,
         createdAt
@@ -146,6 +157,7 @@ export function createMemoryKv(): KvStore {
       const rec = ensureSlug(input.slug);
       const destination: DestinationRecord = {
         id: makeId(),
+        name: input.name,
         url: input.url,
         enabled: true,
         createdAt: nowIso()
@@ -160,7 +172,9 @@ export function createMemoryKv(): KvStore {
       const rec = ensureSlug(input.slug);
       const next = {
         ...rec,
-        destinations: rec.destinations.map((d) => (d.id === input.destinationId ? { ...d, url: input.url } : d))
+        destinations: rec.destinations.map((d) =>
+          d.id === input.destinationId ? { ...d, name: input.name, url: input.url } : d
+        )
       };
       slugs.set(input.slug, next);
       return next;

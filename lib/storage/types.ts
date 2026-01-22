@@ -1,5 +1,6 @@
 export type DestinationRecord = {
   id: string;
+  name: string;
   url: string;
   enabled: boolean;
   createdAt: string;
@@ -40,12 +41,14 @@ export type CreateSlugInput = {
 
 export type AddDestinationInput = {
   slug: string;
+  name: string;
   url: string;
 };
 
 export type EditDestinationInput = {
   slug: string;
   destinationId: string;
+  name: string;
   url: string;
 };
 

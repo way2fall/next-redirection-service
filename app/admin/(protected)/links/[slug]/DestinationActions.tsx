@@ -12,17 +12,21 @@ import {
 export default function DestinationActions({
   slug,
   destinationId,
+  name,
   url,
 }: {
   slug: string;
   destinationId: string;
+  name: string;
   url: string;
 }) {
   const dialogRef = useRef<HTMLDialogElement | null>(null);
   const titleId = useId();
+  const [draftName, setDraftName] = useState(name);
   const [draftUrl, setDraftUrl] = useState(url);
 
   function openDialog() {
+    setDraftName(name);
     setDraftUrl(url);
     dialogRef.current?.showModal();
   }
@@ -78,7 +82,7 @@ export default function DestinationActions({
       >
         <header className={styles.dialogHeader}>
           <div className={styles.dialogTitle} id={titleId}>
-            编辑目标 URL
+            编辑目标地址
           </div>
           <button
             className={styles.dialogClose}
@@ -94,6 +98,17 @@ export default function DestinationActions({
           <input type="hidden" name="slug" value={slug} />
           <input type="hidden" name="destinationId" value={destinationId} />
           <label className={tableStyles.label}>
+            <span className={tableStyles.labelText}>链接名称</span>
+            <input
+              className={tableStyles.input}
+              name="name"
+              value={draftName}
+              onChange={(e) => setDraftName(e.target.value)}
+              required
+              autoFocus
+            />
+          </label>
+          <label className={tableStyles.label}>
             <span className={tableStyles.labelText}>目标 URL</span>
             <input
               className={tableStyles.input}
@@ -101,7 +116,6 @@ export default function DestinationActions({
               value={draftUrl}
               onChange={(e) => setDraftUrl(e.target.value)}
               required
-              autoFocus
             />
           </label>
 

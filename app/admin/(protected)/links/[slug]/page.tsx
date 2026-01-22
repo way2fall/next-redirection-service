@@ -59,6 +59,10 @@ export default async function SlugDetailPage({
         <form className={tableStyles.form} action={addDestination}>
           <input type="hidden" name="slug" value={details.slug} />
           <label className={tableStyles.label}>
+            <span className={tableStyles.labelText}>链接名称</span>
+            <input className={tableStyles.input} name="name" placeholder="例如：官网 / 落地页 A" required />
+          </label>
+          <label className={tableStyles.label}>
             <span className={tableStyles.labelText}>目标 URL</span>
             <input className={tableStyles.input} name="url" placeholder="https://example.com/landing" required />
           </label>
@@ -152,6 +156,7 @@ export default async function SlugDetailPage({
           <table className={tableStyles.table}>
             <thead>
               <tr>
+                <th>链接名称</th>
                 <th>目标 URL</th>
                 <th>状态</th>
                 <th>创建时间</th>
@@ -162,11 +167,14 @@ export default async function SlugDetailPage({
             <tbody>
               {details.destinations.map((d) => (
                 <tr key={d.id}>
+                  <td>
+                    <div>{d.name || "（未命名）"}</div>
+                    <div className={styles.destId}>ID：{d.id}</div>
+                  </td>
                   <td className={tableStyles.dest}>
                     <a className={tableStyles.destLink} href={d.url} target="_blank" rel="noreferrer">
                       {d.url}
                     </a>
-                    <div className={styles.destId}>ID：{d.id}</div>
                   </td>
                   <td>
                     <form action={setDestinationEnabled} className={tableStyles.inlineForm}>
@@ -184,7 +192,7 @@ export default async function SlugDetailPage({
                   <td className={tableStyles.mono}>{fmtDate(d.createdAt)}</td>
                   <td className={tableStyles.mono}>{d.clickCount}</td>
                   <td className={tableStyles.actions}>
-                    <DestinationActions slug={details.slug} destinationId={d.id} url={d.url} />
+                    <DestinationActions slug={details.slug} destinationId={d.id} name={d.name} url={d.url} />
                   </td>
                 </tr>
               ))}

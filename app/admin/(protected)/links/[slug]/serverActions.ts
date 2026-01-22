@@ -22,12 +22,28 @@ function validateUrl(raw: string) {
   return url.toString();
 }
 
+function validateDestinationName(raw: string) {
+  const name = raw.trim();
+  if (!name) throw new Error("Missing destination name.");
+  if (name.length > 80) throw new Error("Destination name too long.");
+  return name;
+}
+
 export async function addDestination(formData: FormData) {
   await requireAdmin();
   const kv = getKv();
   const slug = normalizeSlug(String(formData.get("slug") ?? ""));
+  const rawName = String(formData.get("name") ?? "");
   const raw = String(formData.get("url") ?? "");
-  if (!slug || !raw) redirect(`/admin/links/${encodeURIComponent(slug)}?error=${encodeURIComponent("缺少字段。")}`);
+  if (!slug || !rawName || !raw)
+    redirect(`/admin/links/${encodeURIComponent(slug)}?error=${encodeURIComponent("缺少字段。")}`);
+
+  let name: string;
+  try {
+    name = validateDestinationName(rawName);
+  } catch {
+    redirect(`/admin/links/${encodeURIComponent(slug)}?error=${encodeURIComponent("链接名称无效。")}`);
+  }
 
   let url: string;
   try {
@@ -37,7 +53,7 @@ export async function addDestination(formData: FormData) {
   }
 
   try {
-    await kv.addDestination({ slug, url });
+    await kv.addDestination({ slug, name, url });
   } catch (err) {
     redirect(`/admin/links/${encodeURIComponent(slug)}?error=${encodeURIComponent(actionErrorMessage(err))}`);
   }
@@ -49,9 +65,17 @@ export async function editDestination(formData: FormData) {
   const kv = getKv();
   const slug = normalizeSlug(String(formData.get("slug") ?? ""));
   const destinationId = String(formData.get("destinationId") ?? "");
+  const rawName = String(formData.get("name") ?? "");
   const raw = String(formData.get("url") ?? "");
-  if (!slug || !destinationId || !raw)
+  if (!slug || !destinationId || !rawName || !raw)
     redirect(`/admin/links/${encodeURIComponent(slug)}?error=${encodeURIComponent("缺少字段。")}`);
+
+  let name: string;
+  try {
+    name = validateDestinationName(rawName);
+  } catch {
+    redirect(`/admin/links/${encodeURIComponent(slug)}?error=${encodeURIComponent("链接名称无效。")}`);
+  }
 
   let url: string;
   try {
@@ -61,7 +85,7 @@ export async function editDestination(formData: FormData) {
   }
 
   try {
-    await kv.editDestination({ slug, destinationId, url });
+    await kv.editDestination({ slug, destinationId, name, url });
   } catch (err) {
     redirect(`/admin/links/${encodeURIComponent(slug)}?error=${encodeURIComponent(actionErrorMessage(err))}`);
   }

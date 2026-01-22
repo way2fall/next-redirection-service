@@ -177,6 +177,16 @@ function nowIso() {
   return new Date().toISOString();
 }
 
+function fallbackDestinationName(urlRaw: string) {
+  try {
+    const url = new URL(urlRaw);
+    const path = url.pathname && url.pathname !== "/" ? url.pathname : "";
+    return `${url.hostname}${path}` || urlRaw;
+  } catch {
+    return urlRaw;
+  }
+}
+
 function makeId() {
   const uuid = globalThis.crypto?.randomUUID?.();
   if (uuid) return uuid;
@@ -191,6 +201,10 @@ function parseSlugRecord(raw: string, fallbackSlug: string): SlugRecord | null {
       const destinations: DestinationRecord[] = parsed.destinations
         .map((d: any) => ({
           id: String(d?.id ?? ""),
+          name:
+            typeof d?.name === "string"
+              ? d.name
+              : fallbackDestinationName(String(d?.url ?? "")),
           url: String(d?.url ?? ""),
           enabled: Boolean(d?.enabled),
           createdAt: typeof d?.createdAt === "string" ? d.createdAt : nowIso()
@@ -217,6 +231,7 @@ function parseSlugRecord(raw: string, fallbackSlug: string): SlugRecord | null {
         destinations: [
           {
             id: "legacy",
+            name: fallbackDestinationName(parsed.destination),
             url: parsed.destination,
             enabled: true,
             createdAt
@@ -284,6 +299,7 @@ export function createUpstashRestKv(): KvStore {
       const createdAt = nowIso();
       const destination: DestinationRecord = {
         id: makeId(),
+        name: fallbackDestinationName(input.destinationUrl),
         url: input.destinationUrl,
         enabled: true,
         createdAt
@@ -397,6 +413,7 @@ export function createUpstashRestKv(): KvStore {
 
       const destination: DestinationRecord = {
         id: makeId(),
+        name: input.name,
         url: input.url,
         enabled: true,
         createdAt: nowIso()
@@ -417,7 +434,9 @@ export function createUpstashRestKv(): KvStore {
 
       const next: SlugRecord = {
         ...rec,
-        destinations: rec.destinations.map((d) => (d.id === input.destinationId ? { ...d, url: input.url } : d))
+        destinations: rec.destinations.map((d) =>
+          d.id === input.destinationId ? { ...d, name: input.name, url: input.url } : d
+        )
       };
 
       await putSlugRecord(next);
