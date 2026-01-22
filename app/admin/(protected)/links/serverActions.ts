@@ -40,16 +40,31 @@ function validateDestination(raw: string) {
   return url.toString();
 }
 
+function validateDestinationName(raw: string) {
+  const name = raw.trim();
+  if (!name) throw new Error("Missing destination name.");
+  if (name.length > 80) throw new Error("Destination name too long.");
+  return name;
+}
+
 export async function createSlug(formData: FormData) {
   await requireAdmin();
   const kv = getKv();
 
   const slug = normalizeSlug(String(formData.get("slug") ?? ""));
+  const destinationNameRaw = String(formData.get("destinationName") ?? "");
   const destinationRaw = String(formData.get("destination") ?? "");
 
-  if (!slug || !destinationRaw) redirect(`/admin/links?error=${encodeURIComponent("缺少字段。")}`);
+  if (!slug || !destinationNameRaw || !destinationRaw) redirect(`/admin/links?error=${encodeURIComponent("缺少字段。")}`);
   if (!isValidSlug(slug)) redirect(`/admin/links?error=${encodeURIComponent("短码格式无效。")}`);
   if (isReservedSlug(slug)) redirect(`/admin/links?error=${encodeURIComponent("该短码为保留项。")}`);
+
+  let destinationName: string;
+  try {
+    destinationName = validateDestinationName(destinationNameRaw);
+  } catch {
+    redirect(`/admin/links?error=${encodeURIComponent("链接名称无效。")}`);
+  }
 
   let destination: string;
   try {
@@ -67,7 +82,7 @@ export async function createSlug(formData: FormData) {
   if (exists) redirect(`/admin/links?error=${encodeURIComponent("该短码已存在。")}`);
 
   try {
-    await kv.createSlug({ slug, destinationUrl: destination });
+    await kv.createSlug({ slug, destinationName, destinationUrl: destination });
   } catch (err) {
     redirect(`/admin/links?error=${encodeURIComponent(actionErrorMessage(err))}`);
   }

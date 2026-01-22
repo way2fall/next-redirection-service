@@ -36,6 +36,7 @@ export type SlugDetails = {
 
 export type CreateSlugInput = {
   slug: string;
+  destinationName: string;
   destinationUrl: string;
 };
 

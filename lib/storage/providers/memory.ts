@@ -79,7 +79,7 @@ export function createMemoryKv(): KvStore {
       const createdAt = nowIso();
       const destination: DestinationRecord = {
         id: makeId(),
-        name: fallbackDestinationName(input.destinationUrl),
+        name: input.destinationName,
         url: input.destinationUrl,
         enabled: true,
         createdAt

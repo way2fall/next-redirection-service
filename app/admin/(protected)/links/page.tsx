@@ -59,6 +59,10 @@ export default async function AdminLinksPage({
             <input className={styles.input} name="slug" placeholder="docs" required />
           </label>
           <label className={styles.label}>
+            <span className={styles.labelText}>首个链接名称</span>
+            <input className={styles.input} name="destinationName" placeholder="例如：官网 / 落地页 A" required />
+          </label>
+          <label className={styles.label}>
             <span className={styles.labelText}>首个目标 URL</span>
             <input
               className={styles.input}
