@@ -41,14 +41,14 @@ lib/
 
 ```json
 {
-  "version": 2,
+  "version": 3,
   "slug": "abc",
   "enabled": true,
   "createdAt": "2026-01-20T00:00:00.000Z",
   "destinations": [
     {
       "id": "uuid",
-      "url": "https://example.com",
+      "urls": ["https://example.com", "https://example.com/alt"],
       "enabled": true,
       "createdAt": "..."
     }
@@ -68,12 +68,13 @@ lib/
 
 - If slug not found: `404`
 - If slug disabled OR all destinations disabled: `302` → `/fallback?slug=...`
-- Otherwise: pick the next **enabled** destination via round-robin and `302` to it.
+- Otherwise: pick the next **enabled** destination URL via deterministic round-robin (one global cursor per slug) and `302` to it.
 - Analytics increments (slug + destination) are **fire-and-forget** and do not delay the redirect response.
 
 ## Backward compatibility
 
-- Existing v1 records shaped like `{ slug, destination, createdAt }` are read as a v2 slug with a single destination `{ id: "legacy", ... }`.
+- Existing v1 records shaped like `{ slug, destination, createdAt }` are read as a v3 slug with a single destination `{ id: "legacy", ... }`.
+- Existing v2 records (`destinations[].url`) are read as v3 (`destinations[].urls`).
 - Existing slug click counters remain valid (`nrs:clicks:{slug}`).
 
 ## Environment variables

@@ -22,6 +22,19 @@ function validateUrl(raw: string) {
   return url.toString();
 }
 
+function parseUrlLines(raw: string) {
+  return raw
+    .split(/\r?\n/g)
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+function validateUrls(raw: string) {
+  const lines = parseUrlLines(raw);
+  if (lines.length === 0) throw new Error("Missing destination.");
+  return lines.map(validateUrl);
+}
+
 function validateDestinationName(raw: string) {
   const name = raw.trim();
   if (!name) throw new Error("Missing destination name.");
@@ -45,15 +58,15 @@ export async function addDestination(formData: FormData) {
     redirect(`/admin/links/${encodeURIComponent(slug)}?error=${encodeURIComponent("链接名称无效。")}`);
   }
 
-  let url: string;
+  let urls: string[];
   try {
-    url = validateUrl(raw);
+    urls = validateUrls(raw);
   } catch {
     redirect(`/admin/links/${encodeURIComponent(slug)}?error=${encodeURIComponent("URL 无效。")}`);
   }
 
   try {
-    await kv.addDestination({ slug, name, url });
+    await kv.addDestination({ slug, name, urls });
   } catch (err) {
     redirect(`/admin/links/${encodeURIComponent(slug)}?error=${encodeURIComponent(actionErrorMessage(err))}`);
   }
@@ -77,15 +90,15 @@ export async function editDestination(formData: FormData) {
     redirect(`/admin/links/${encodeURIComponent(slug)}?error=${encodeURIComponent("链接名称无效。")}`);
   }
 
-  let url: string;
+  let urls: string[];
   try {
-    url = validateUrl(raw);
+    urls = validateUrls(raw);
   } catch {
     redirect(`/admin/links/${encodeURIComponent(slug)}?error=${encodeURIComponent("URL 无效。")}`);
   }
 
   try {
-    await kv.editDestination({ slug, destinationId, name, url });
+    await kv.editDestination({ slug, destinationId, name, urls });
   } catch (err) {
     redirect(`/admin/links/${encodeURIComponent(slug)}?error=${encodeURIComponent(actionErrorMessage(err))}`);
   }

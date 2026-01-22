@@ -74,12 +74,13 @@ export default async function SlugDetailPage({
             />
           </label>
           <label className={tableStyles.label}>
-            <span className={tableStyles.labelText}>目标 URL</span>
-            <input
+            <span className={tableStyles.labelText}>目标 URL（每行一个）</span>
+            <textarea
               className={tableStyles.input}
               name="url"
               placeholder="https://example.com/landing"
               required
+              rows={5}
             />
           </label>
           <button className={tableStyles.create} type="submit">
@@ -201,14 +202,19 @@ export default async function SlugDetailPage({
                     <div className={styles.destId}>ID：{d.id}</div>
                   </td>
                   <td className={tableStyles.dest}>
-                    <a
-                      className={tableStyles.destLink}
-                      href={d.url}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      {d.url}
-                    </a>
+                    <div className={styles.urlList}>
+                      {d.urls.map((url, idx) => (
+                        <a
+                          key={`${idx}:${url}`}
+                          className={tableStyles.destLink}
+                          href={url}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          {url}
+                        </a>
+                      ))}
+                    </div>
                   </td>
                   <td>
                     <form
@@ -237,7 +243,7 @@ export default async function SlugDetailPage({
                       slug={details.slug}
                       destinationId={d.id}
                       name={d.name}
-                      url={d.url}
+                      urls={d.urls}
                     />
                   </td>
                 </tr>

@@ -80,12 +80,13 @@ export default async function AdminLinksPage({
             />
           </label>
           <label className={styles.label}>
-            <span className={styles.labelText}>首个目标 URL</span>
-            <input
+            <span className={styles.labelText}>首个目标 URL（每行一个）</span>
+            <textarea
               className={styles.input}
               name="destination"
               placeholder="https://example.com/somewhere"
               required
+              rows={4}
             />
           </label>
           <button className={styles.create} type="submit">

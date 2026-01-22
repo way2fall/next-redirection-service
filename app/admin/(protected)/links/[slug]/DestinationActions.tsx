@@ -13,21 +13,21 @@ export default function DestinationActions({
   slug,
   destinationId,
   name,
-  url,
+  urls,
 }: {
   slug: string;
   destinationId: string;
   name: string;
-  url: string;
+  urls: string[];
 }) {
   const dialogRef = useRef<HTMLDialogElement | null>(null);
   const titleId = useId();
   const [draftName, setDraftName] = useState(name);
-  const [draftUrl, setDraftUrl] = useState(url);
+  const [draftUrlsText, setDraftUrlsText] = useState(urls.join("\n"));
 
   function openDialog() {
     setDraftName(name);
-    setDraftUrl(url);
+    setDraftUrlsText(urls.join("\n"));
     dialogRef.current?.showModal();
   }
 
@@ -58,7 +58,7 @@ export default function DestinationActions({
         <form
           action={deleteDestination}
           onSubmit={(e) => {
-            if (!confirm("确定删除这个目标 URL 吗？")) e.preventDefault();
+            if (!confirm("确定删除这个目标组吗？")) e.preventDefault();
           }}
         >
           <input type="hidden" name="slug" value={slug} />
@@ -82,7 +82,7 @@ export default function DestinationActions({
       >
         <header className={styles.dialogHeader}>
           <div className={styles.dialogTitle} id={titleId}>
-            编辑目标地址
+            编辑目标组
           </div>
           <button
             className={styles.dialogClose}
@@ -109,13 +109,14 @@ export default function DestinationActions({
             />
           </label>
           <label className={tableStyles.label}>
-            <span className={tableStyles.labelText}>目标 URL</span>
-            <input
+            <span className={tableStyles.labelText}>目标 URL（每行一个）</span>
+            <textarea
               className={tableStyles.input}
               name="url"
-              value={draftUrl}
-              onChange={(e) => setDraftUrl(e.target.value)}
+              value={draftUrlsText}
+              onChange={(e) => setDraftUrlsText(e.target.value)}
               required
+              rows={6}
             />
           </label>
 

@@ -1,13 +1,13 @@
 export type DestinationRecord = {
   id: string;
   name: string;
-  url: string;
+  urls: string[];
   enabled: boolean;
   createdAt: string;
 };
 
 export type SlugRecord = {
-  version: 2;
+  version: 3;
   slug: string;
   enabled: boolean;
   createdAt: string;
@@ -37,20 +37,20 @@ export type SlugDetails = {
 export type CreateSlugInput = {
   slug: string;
   destinationName: string;
-  destinationUrl: string;
+  destinationUrls: string[];
 };
 
 export type AddDestinationInput = {
   slug: string;
   name: string;
-  url: string;
+  urls: string[];
 };
 
 export type EditDestinationInput = {
   slug: string;
   destinationId: string;
   name: string;
-  url: string;
+  urls: string[];
 };
 
 export type SetDestinationEnabledInput = {

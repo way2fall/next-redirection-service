@@ -14,7 +14,7 @@ export interface KvStore {
   // Redirect critical-path (Edge): keep this minimal.
   getRedirectConfig(
     slug: string
-  ): Promise<{ enabled: boolean; destinations: Array<{ id: string; url: string; enabled: boolean }> } | null>;
+  ): Promise<{ enabled: boolean; destinations: Array<{ id: string; urls: string[]; enabled: boolean }> } | null>;
   nextRoundRobinCursor(slug: string): Promise<number>;
   recordClick(slug: string, destinationId: string): Promise<void>;
 

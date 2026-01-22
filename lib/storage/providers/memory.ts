@@ -53,7 +53,7 @@ export function createMemoryKv(): KvStore {
       if (!rec) return null;
       return {
         enabled: rec.enabled,
-        destinations: rec.destinations.map((d) => ({ id: d.id, url: d.url, enabled: d.enabled }))
+        destinations: rec.destinations.map((d) => ({ id: d.id, urls: d.urls, enabled: d.enabled }))
       };
     },
 
@@ -80,12 +80,12 @@ export function createMemoryKv(): KvStore {
       const destination: DestinationRecord = {
         id: makeId(),
         name: input.destinationName,
-        url: input.destinationUrl,
+        urls: input.destinationUrls,
         enabled: true,
         createdAt
       };
       const rec: SlugRecord = {
-        version: 2,
+        version: 3,
         slug: input.slug,
         enabled: true,
         createdAt,
@@ -158,7 +158,7 @@ export function createMemoryKv(): KvStore {
       const destination: DestinationRecord = {
         id: makeId(),
         name: input.name,
-        url: input.url,
+        urls: input.urls,
         enabled: true,
         createdAt: nowIso()
       };
@@ -173,7 +173,7 @@ export function createMemoryKv(): KvStore {
       const next = {
         ...rec,
         destinations: rec.destinations.map((d) =>
-          d.id === input.destinationId ? { ...d, name: input.name, url: input.url } : d
+          d.id === input.destinationId ? { ...d, name: input.name, urls: input.urls } : d
         )
       };
       slugs.set(input.slug, next);

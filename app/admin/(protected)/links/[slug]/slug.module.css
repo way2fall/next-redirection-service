@@ -62,6 +62,11 @@
   font-size: 11px;
 }
 
+.urlList{
+  display: grid;
+  gap: 6px;
+}
+
 .dialog{
   width: min(720px, calc(100vw - 32px));
   border-radius: 16px;

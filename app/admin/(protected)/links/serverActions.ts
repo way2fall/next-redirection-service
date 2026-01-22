@@ -40,6 +40,19 @@ function validateDestination(raw: string) {
   return url.toString();
 }
 
+function parseUrlLines(raw: string) {
+  return raw
+    .split(/\r?\n/g)
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+function validateDestinations(raw: string) {
+  const lines = parseUrlLines(raw);
+  if (lines.length === 0) throw new Error("Missing destination.");
+  return lines.map(validateDestination);
+}
+
 function validateDestinationName(raw: string) {
   const name = raw.trim();
   if (!name) throw new Error("Missing destination name.");
@@ -66,9 +79,9 @@ export async function createSlug(formData: FormData) {
     redirect(`/admin/links?error=${encodeURIComponent("链接名称无效。")}`);
   }
 
-  let destination: string;
+  let destinationUrls: string[];
   try {
-    destination = validateDestination(destinationRaw);
+    destinationUrls = validateDestinations(destinationRaw);
   } catch {
     redirect(`/admin/links?error=${encodeURIComponent("目标 URL 无效。")}`);
   }
@@ -82,7 +95,7 @@ export async function createSlug(formData: FormData) {
   if (exists) redirect(`/admin/links?error=${encodeURIComponent("该短码已存在。")}`);
 
   try {
-    await kv.createSlug({ slug, destinationName, destinationUrl: destination });
+    await kv.createSlug({ slug, destinationName, destinationUrls });
   } catch (err) {
     redirect(`/admin/links?error=${encodeURIComponent(actionErrorMessage(err))}`);
   }

@@ -193,26 +193,36 @@ function makeId() {
   return `d_${Math.random().toString(36).slice(2, 10)}${Math.random().toString(36).slice(2, 10)}`;
 }
 
+function parseDestinationUrls(d: any) {
+  if (Array.isArray(d?.urls)) return d.urls.map((u: any) => String(u ?? "").trim()).filter(Boolean);
+  if (typeof d?.url === "string") return [d.url.trim()].filter(Boolean);
+  return [];
+}
+
 function parseSlugRecord(raw: string, fallbackSlug: string): SlugRecord | null {
   try {
     const parsed = JSON.parse(raw) as any;
 
-    if (parsed?.version === 2 && typeof parsed?.slug === "string" && Array.isArray(parsed?.destinations)) {
+    if (
+      (parsed?.version === 3 || parsed?.version === 2) &&
+      typeof parsed?.slug === "string" &&
+      Array.isArray(parsed?.destinations)
+    ) {
       const destinations: DestinationRecord[] = parsed.destinations
         .map((d: any) => ({
           id: String(d?.id ?? ""),
           name:
             typeof d?.name === "string"
               ? d.name
-              : fallbackDestinationName(String(d?.url ?? "")),
-          url: String(d?.url ?? ""),
+              : fallbackDestinationName(parseDestinationUrls(d)[0] ?? ""),
+          urls: parseDestinationUrls(d),
           enabled: Boolean(d?.enabled),
           createdAt: typeof d?.createdAt === "string" ? d.createdAt : nowIso()
         }))
-        .filter((d: DestinationRecord) => d.id && d.url);
+        .filter((d: DestinationRecord) => d.id && d.urls.length > 0);
 
       return {
-        version: 2,
+        version: 3,
         slug: parsed.slug,
         enabled: Boolean(parsed.enabled),
         createdAt: typeof parsed.createdAt === "string" ? parsed.createdAt : nowIso(),
@@ -224,7 +234,7 @@ function parseSlugRecord(raw: string, fallbackSlug: string): SlugRecord | null {
     if (typeof parsed?.destination === "string") {
       const createdAt = typeof parsed?.createdAt === "string" ? parsed.createdAt : nowIso();
       return {
-        version: 2,
+        version: 3,
         slug: typeof parsed?.slug === "string" ? parsed.slug : fallbackSlug,
         enabled: true,
         createdAt,
@@ -232,7 +242,7 @@ function parseSlugRecord(raw: string, fallbackSlug: string): SlugRecord | null {
           {
             id: "legacy",
             name: fallbackDestinationName(parsed.destination),
-            url: parsed.destination,
+            urls: [parsed.destination],
             enabled: true,
             createdAt
           }
@@ -271,7 +281,7 @@ export function createUpstashRestKv(): KvStore {
       if (!rec) return null;
       return {
         enabled: rec.enabled,
-        destinations: rec.destinations.map((d) => ({ id: d.id, url: d.url, enabled: d.enabled }))
+        destinations: rec.destinations.map((d) => ({ id: d.id, urls: d.urls, enabled: d.enabled }))
       };
     },
 
@@ -300,12 +310,12 @@ export function createUpstashRestKv(): KvStore {
       const destination: DestinationRecord = {
         id: makeId(),
         name: input.destinationName,
-        url: input.destinationUrl,
+        urls: input.destinationUrls,
         enabled: true,
         createdAt
       };
       const rec: SlugRecord = {
-        version: 2,
+        version: 3,
         slug: input.slug,
         enabled: true,
         createdAt,
@@ -414,7 +424,7 @@ export function createUpstashRestKv(): KvStore {
       const destination: DestinationRecord = {
         id: makeId(),
         name: input.name,
-        url: input.url,
+        urls: input.urls,
         enabled: true,
         createdAt: nowIso()
       };
@@ -435,7 +445,7 @@ export function createUpstashRestKv(): KvStore {
       const next: SlugRecord = {
         ...rec,
         destinations: rec.destinations.map((d) =>
-          d.id === input.destinationId ? { ...d, name: input.name, url: input.url } : d
+          d.id === input.destinationId ? { ...d, name: input.name, urls: input.urls } : d
         )
       };
 
