@@ -3,27 +3,31 @@
 import { useId, useRef, useState } from "react";
 import tableStyles from "../links.module.css";
 import styles from "./slug.module.css";
-import {
-  deleteDestination,
-  editDestination,
-  resetDestinationClickCount,
-} from "./serverActions";
 
 export default function DestinationActions({
   slug,
   destinationId,
   name,
   urls,
+  disabled,
+  onReset,
+  onDelete,
+  onEdit,
 }: {
   slug: string;
   destinationId: string;
   name: string;
   urls: string[];
+  disabled: boolean;
+  onReset: () => Promise<void>;
+  onDelete: () => Promise<void>;
+  onEdit: (next: { name: string; urls: string[] }) => Promise<void>;
 }) {
   const dialogRef = useRef<HTMLDialogElement | null>(null);
   const titleId = useId();
   const [draftName, setDraftName] = useState(name);
   const [draftUrlsText, setDraftUrlsText] = useState(urls.join("\n"));
+  const [saving, setSaving] = useState(false);
 
   function openDialog() {
     setDraftName(name);
@@ -42,34 +46,29 @@ export default function DestinationActions({
           className={tableStyles.actionBtn}
           type="button"
           onClick={openDialog}
+          disabled={disabled}
         >
           编辑
         </button>
-        <form action={resetDestinationClickCount}>
-          <input type="hidden" name="slug" value={slug} />
-          <input type="hidden" name="destinationId" value={destinationId} />
-          <button
-            className={`${tableStyles.actionBtn} ${tableStyles.reset}`}
-            type="submit"
-          >
-            重置
-          </button>
-        </form>
-        <form
-          action={deleteDestination}
-          onSubmit={(e) => {
-            if (!confirm("确定删除这个目标组吗？")) e.preventDefault();
+        <button
+          className={`${tableStyles.actionBtn} ${tableStyles.reset}`}
+          type="button"
+          disabled={disabled}
+          onClick={() => onReset()}
+        >
+          重置
+        </button>
+        <button
+          className={`${tableStyles.actionBtn} ${tableStyles.delete}`}
+          type="button"
+          disabled={disabled}
+          onClick={() => {
+            if (!confirm("确定删除这个目标组吗？")) return;
+            void onDelete();
           }}
         >
-          <input type="hidden" name="slug" value={slug} />
-          <input type="hidden" name="destinationId" value={destinationId} />
-          <button
-            className={`${tableStyles.actionBtn} ${tableStyles.delete}`}
-            type="submit"
-          >
-            删除
-          </button>
-        </form>
+          删除
+        </button>
       </div>
 
       <dialog
@@ -94,9 +93,25 @@ export default function DestinationActions({
           </button>
         </header>
 
-        <form action={editDestination} className={styles.dialogBody}>
-          <input type="hidden" name="slug" value={slug} />
-          <input type="hidden" name="destinationId" value={destinationId} />
+        <form
+          className={styles.dialogBody}
+          onSubmit={async (e) => {
+            e.preventDefault();
+            if (saving || disabled) return;
+            const urls = draftUrlsText
+              .split(/\r?\n/g)
+              .map((s) => s.trim())
+              .filter(Boolean);
+
+            setSaving(true);
+            try {
+              await onEdit({ name: draftName, urls });
+              closeDialog();
+            } finally {
+              setSaving(false);
+            }
+          }}
+        >
           <label className={tableStyles.label}>
             <span className={tableStyles.labelText}>链接名称</span>
             <input
@@ -106,6 +121,7 @@ export default function DestinationActions({
               onChange={(e) => setDraftName(e.target.value)}
               required
               autoFocus
+              disabled={disabled || saving}
             />
           </label>
           <label className={tableStyles.label}>
@@ -117,6 +133,7 @@ export default function DestinationActions({
               onChange={(e) => setDraftUrlsText(e.target.value)}
               required
               rows={6}
+              disabled={disabled || saving}
             />
           </label>
 
@@ -125,11 +142,12 @@ export default function DestinationActions({
               className={tableStyles.actionBtn}
               type="button"
               onClick={closeDialog}
+              disabled={saving}
             >
               取消
             </button>
-            <button className={tableStyles.actionBtn} type="submit">
-              保存
+            <button className={tableStyles.actionBtn} type="submit" disabled={saving}>
+              {saving ? "保存中…" : "保存"}
             </button>
           </div>
         </form>

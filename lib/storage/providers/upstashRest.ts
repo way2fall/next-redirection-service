@@ -373,11 +373,11 @@ export function createUpstashRestKv(): KvStore {
       const rawHitKeys = slugs.map((s) => keyRawHits(s));
       const clickKeys = slugs.map((s) => keyClicks(s));
 
-      const [rawLinks, rawHits, rawClicks] = await Promise.all([
-        cmd<Array<string | null>>(["MGET", ...linkKeys]),
-        cmd<Array<string | null>>(["MGET", ...rawHitKeys]),
-        cmd<Array<string | null>>(["MGET", ...clickKeys])
-      ]);
+      const [rawLinks, rawHits, rawClicks] = (await cmdMany<Array<string | null>>([
+        ["MGET", ...linkKeys],
+        ["MGET", ...rawHitKeys],
+        ["MGET", ...clickKeys]
+      ])) as [Array<string | null>, Array<string | null>, Array<string | null>];
 
       const out: SlugSummary[] = [];
       for (let i = 0; i < slugs.length; i++) {
@@ -421,14 +421,19 @@ export function createUpstashRestKv(): KvStore {
       if (!rec) return null;
 
       const destKeys = rec.destinations.map((d) => keyDestClicks(slug, d.id));
-      const [rawHitsStr, totalStr, rrStr, destCounts] = await Promise.all([
-        cmd<string | null>(["GET", keyRawHits(slug)]),
-        cmd<string | null>(["GET", keyClicks(slug)]),
-        cmd<string | null>(["GET", keyRoundRobin(slug)]),
-        destKeys.length
-          ? cmd<Array<string | null>>(["MGET", ...destKeys])
-          : Promise.resolve<Array<string | null>>([])
-      ]);
+
+      const pipeline: Array<Array<string | number>> = [
+        ["GET", keyRawHits(slug)],
+        ["GET", keyClicks(slug)],
+        ["GET", keyRoundRobin(slug)]
+      ];
+      if (destKeys.length) pipeline.push(["MGET", ...destKeys]);
+
+      const piped = await cmdMany<any>(pipeline);
+      const rawHitsStr = (piped[0] ?? null) as string | null;
+      const totalStr = (piped[1] ?? null) as string | null;
+      const rrStr = (piped[2] ?? null) as string | null;
+      const destCounts = (destKeys.length ? (piped[3] as Array<string | null>) : []) ?? [];
 
       const destinations = rec.destinations.map((d, i) => ({
         ...d,
