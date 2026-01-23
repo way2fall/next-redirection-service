@@ -58,8 +58,9 @@ lib/
 
 **Analytics + round-robin** are stored as counters/keys (so redirects don’t rewrite the slug JSON):
 
-- Slug total clicks: `nrs:clicks:{slug}` (backward compatible with v1)
-- Destination clicks: `nrs:destClicks:{slug}:{destinationId}`
+- Slug raw hits (all incoming requests): `nrs:rawHits:{slug}`
+- Slug valid clicks (human-likely): `nrs:clicks:{slug}` (backward compatible with v1)
+- Destination valid clicks: `nrs:destClicks:{slug}:{destinationId}`
 - Round-robin cursor: `nrs:rr:{slug}` (monotonic; selection uses `INCR - 1`)
 
 **Fallback HTML** is stored at `nrs:fallback:html` (empty means “use built-in default”).
@@ -69,7 +70,9 @@ lib/
 - If slug not found: `404`
 - If slug disabled OR all destinations disabled: `302` → `/fallback?slug=...`
 - Otherwise: pick the next **enabled** destination URL via deterministic round-robin (one global cursor per slug) and `302` to it.
-- Analytics increments (slug + destination) are **fire-and-forget** and do not delay the redirect response.
+- Analytics increments are **fire-and-forget** and do not delay the redirect response:
+  - `rawHits` increments for every resolved slug request (including bots/prefetch/HEAD).
+  - `valid clicks` increment only when the request looks like a real browser navigation (see `lib/redirect/clickClassifier.ts`).
 
 ## Backward compatibility
 
@@ -87,6 +90,7 @@ See `.env.example`.
 - `PUBLIC_BASE_URL`: optional base URL used by the admin “Copy” button
 - `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN`: KV backend (Upstash Redis REST)
 - `KV_PREFIX`: optional namespace for keys (handy per-instance)
+- `CLICK_DEDUPE_WINDOW_SECONDS`: dedupe window for `valid clicks` counting (default `3`)
 
 ## Running locally
 

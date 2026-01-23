@@ -19,6 +19,7 @@ export type SlugSummary = {
   enabled: boolean;
   createdAt: string;
   totalClickCount: number;
+  rawHitCount: number;
   destinationCount: number;
   enabledDestinationCount: number;
 };
@@ -30,6 +31,7 @@ export type SlugDetails = {
   enabled: boolean;
   createdAt: string;
   totalClickCount: number;
+  rawHitCount: number;
   roundRobinCursor: number;
   destinations: DestinationWithClicks[];
 };

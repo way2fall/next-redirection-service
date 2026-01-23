@@ -16,7 +16,9 @@ export interface KvStore {
     slug: string
   ): Promise<{ enabled: boolean; destinations: Array<{ id: string; urls: string[]; enabled: boolean }> } | null>;
   nextRoundRobinCursor(slug: string): Promise<number>;
-  recordClick(slug: string, destinationId: string): Promise<void>;
+  recordRawHit(slug: string): Promise<void>;
+  recordValidClick(slug: string, destinationId: string): Promise<void>;
+  acquireValidClickDedupe(slug: string, fingerprint: string, windowSeconds: number): Promise<boolean>;
 
   // Admin (Node.js).
   getSlug(slug: string): Promise<SlugRecord | null>;

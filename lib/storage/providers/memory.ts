@@ -32,9 +32,11 @@ function makeId() {
 
 export function createMemoryKv(): KvStore {
   const slugs = new Map<string, SlugRecord>();
+  const slugRawHits = new Map<string, number>();
   const slugClicks = new Map<string, number>();
   const destClicks = new Map<string, number>(); // key = `${slug}:${destId}`
   const rr = new Map<string, number>();
+  const dedupe = new Map<string, number>(); // key = `${slug}:${fingerprint}` -> expiresAtMs
   const fallback = { html: null as string | null };
 
   function ensureSlug(slug: string) {
@@ -63,7 +65,22 @@ export function createMemoryKv(): KvStore {
       return cur;
     },
 
-    async recordClick(slug: string, destinationId: string) {
+    async recordRawHit(slug: string) {
+      slugRawHits.set(slug, (slugRawHits.get(slug) ?? 0) + 1);
+    },
+
+    async acquireValidClickDedupe(slug: string, fingerprint: string, windowSeconds: number) {
+      const ttlMs = Math.max(0, Math.floor(windowSeconds)) * 1000;
+      if (!ttlMs) return true;
+      const now = Date.now();
+      const k = `${slug}:${fingerprint}`;
+      const expiresAt = dedupe.get(k) ?? 0;
+      if (expiresAt > now) return false;
+      dedupe.set(k, now + ttlMs);
+      return true;
+    },
+
+    async recordValidClick(slug: string, destinationId: string) {
       slugClicks.set(slug, (slugClicks.get(slug) ?? 0) + 1);
       const k = keyDest(slug, destinationId);
       destClicks.set(k, (destClicks.get(k) ?? 0) + 1);
@@ -93,6 +110,7 @@ export function createMemoryKv(): KvStore {
       };
 
       slugs.set(input.slug, rec);
+      slugRawHits.set(input.slug, slugRawHits.get(input.slug) ?? 0);
       slugClicks.set(input.slug, slugClicks.get(input.slug) ?? 0);
       destClicks.set(keyDest(input.slug, destination.id), destClicks.get(keyDest(input.slug, destination.id)) ?? 0);
       return rec;
@@ -100,10 +118,14 @@ export function createMemoryKv(): KvStore {
 
     async deleteSlug(slug: string) {
       slugs.delete(slug);
+      slugRawHits.delete(slug);
       slugClicks.delete(slug);
       rr.delete(slug);
       for (const k of [...destClicks.keys()]) {
         if (k.startsWith(`${slug}:`)) destClicks.delete(k);
+      }
+      for (const k of [...dedupe.keys()]) {
+        if (k.startsWith(`${slug}:`)) dedupe.delete(k);
       }
     },
 
@@ -116,6 +138,7 @@ export function createMemoryKv(): KvStore {
           enabled: rec.enabled,
           createdAt: rec.createdAt,
           totalClickCount: slugClicks.get(rec.slug) ?? 0,
+          rawHitCount: slugRawHits.get(rec.slug) ?? 0,
           destinationCount: rec.destinations.length,
           enabledDestinationCount
         });
@@ -129,6 +152,7 @@ export function createMemoryKv(): KvStore {
     },
 
     async resetSlugClickCount(slug: string) {
+      slugRawHits.set(slug, 0);
       slugClicks.set(slug, 0);
       for (const k of destClicks.keys()) {
         if (k.startsWith(`${slug}:`)) destClicks.set(k, 0);
@@ -147,6 +171,7 @@ export function createMemoryKv(): KvStore {
         enabled: rec.enabled,
         createdAt: rec.createdAt,
         totalClickCount: slugClicks.get(slug) ?? 0,
+        rawHitCount: slugRawHits.get(slug) ?? 0,
         roundRobinCursor: Math.max(0, (rr.get(slug) ?? 0) - 1),
         destinations
       };

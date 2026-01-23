@@ -109,12 +109,20 @@ function keyClicks(slug: string) {
   return `${prefix()}:clicks:${slug}`;
 }
 
+function keyRawHits(slug: string) {
+  return `${prefix()}:rawHits:${slug}`;
+}
+
 function keyDestClicks(slug: string, destinationId: string) {
   return `${prefix()}:destClicks:${slug}:${destinationId}`;
 }
 
 function keyRoundRobin(slug: string) {
   return `${prefix()}:rr:${slug}`;
+}
+
+function keyValidClickDedupe(slug: string, fingerprint: string) {
+  return `${prefix()}:dedupe:${slug}:${fingerprint}`;
 }
 
 function keyIndex() {
@@ -291,7 +299,18 @@ export function createUpstashRestKv(): KvStore {
       return Number.isFinite(asNumber) ? Math.max(0, asNumber - 1) : 0;
     },
 
-    async recordClick(slug: string, destinationId: string) {
+    async recordRawHit(slug: string) {
+      await cmd<number>(["INCR", keyRawHits(slug)]);
+    },
+
+    async acquireValidClickDedupe(slug: string, fingerprint: string, windowSeconds: number) {
+      const ttl = Math.max(0, Math.floor(windowSeconds));
+      if (!ttl) return true;
+      const res = await cmd<string | null>(["SET", keyValidClickDedupe(slug, fingerprint), "1", "EX", ttl, "NX"]);
+      return res === "OK";
+    },
+
+    async recordValidClick(slug: string, destinationId: string) {
       await cmdMany([
         ["INCR", keyClicks(slug)],
         ["INCR", keyDestClicks(slug, destinationId)]
@@ -325,6 +344,7 @@ export function createUpstashRestKv(): KvStore {
       await cmdMany([
         ["SET", keyLink(input.slug), JSON.stringify(rec)],
         ["SADD", keyIndex(), input.slug],
+        ["SET", keyRawHits(input.slug), "0"],
         ["SET", keyClicks(input.slug), "0"],
         ["SET", keyDestClicks(input.slug, destination.id), "0"]
       ]);
@@ -337,6 +357,7 @@ export function createUpstashRestKv(): KvStore {
       const destKeys = rec ? rec.destinations.map((d) => keyDestClicks(slug, d.id)) : [];
       await cmdMany([
         ["DEL", keyLink(slug)],
+        ["DEL", keyRawHits(slug)],
         ["DEL", keyClicks(slug)],
         ["DEL", keyRoundRobin(slug)],
         ...destKeys.map((k) => ["DEL", k]),
@@ -349,10 +370,12 @@ export function createUpstashRestKv(): KvStore {
       if (!slugs.length) return [];
 
       const linkKeys = slugs.map((s) => keyLink(s));
+      const rawHitKeys = slugs.map((s) => keyRawHits(s));
       const clickKeys = slugs.map((s) => keyClicks(s));
 
-      const [rawLinks, rawClicks] = await Promise.all([
+      const [rawLinks, rawHits, rawClicks] = await Promise.all([
         cmd<Array<string | null>>(["MGET", ...linkKeys]),
+        cmd<Array<string | null>>(["MGET", ...rawHitKeys]),
         cmd<Array<string | null>>(["MGET", ...clickKeys])
       ]);
 
@@ -368,6 +391,7 @@ export function createUpstashRestKv(): KvStore {
           enabled: rec.enabled,
           createdAt: rec.createdAt,
           totalClickCount: toInt(rawClicks[i]),
+          rawHitCount: toInt(rawHits[i]),
           destinationCount: rec.destinations.length,
           enabledDestinationCount
         });
@@ -385,7 +409,11 @@ export function createUpstashRestKv(): KvStore {
     async resetSlugClickCount(slug: string) {
       const rec = await getSlugRecord(slug);
       const destKeys = rec ? rec.destinations.map((d) => keyDestClicks(slug, d.id)) : [];
-      await cmdMany([["SET", keyClicks(slug), "0"], ...destKeys.map((k) => ["SET", k, "0"])]);
+      await cmdMany([
+        ["SET", keyRawHits(slug), "0"],
+        ["SET", keyClicks(slug), "0"],
+        ...destKeys.map((k) => ["SET", k, "0"])
+      ]);
     },
 
     async getSlugDetails(slug: string) {
@@ -393,7 +421,8 @@ export function createUpstashRestKv(): KvStore {
       if (!rec) return null;
 
       const destKeys = rec.destinations.map((d) => keyDestClicks(slug, d.id));
-      const [totalStr, rrStr, destCounts] = await Promise.all([
+      const [rawHitsStr, totalStr, rrStr, destCounts] = await Promise.all([
+        cmd<string | null>(["GET", keyRawHits(slug)]),
         cmd<string | null>(["GET", keyClicks(slug)]),
         cmd<string | null>(["GET", keyRoundRobin(slug)]),
         destKeys.length
@@ -411,6 +440,7 @@ export function createUpstashRestKv(): KvStore {
         enabled: rec.enabled,
         createdAt: rec.createdAt,
         totalClickCount: toInt(totalStr),
+        rawHitCount: toInt(rawHitsStr),
         roundRobinCursor: Math.max(0, toInt(rrStr) - 1),
         destinations
       };

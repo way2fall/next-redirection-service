@@ -145,8 +145,12 @@ export default async function SlugDetailPage({
             <div className={styles.metaValue}>{fmtDate(details.createdAt)}</div>
           </div>
           <div className={styles.metaRow}>
-            <div className={styles.metaLabel}>总点击数</div>
+            <div className={styles.metaLabel}>有效点击</div>
             <div className={styles.metaValue}>{details.totalClickCount}</div>
+          </div>
+          <div className={styles.metaRow}>
+            <div className={styles.metaLabel}>原始请求</div>
+            <div className={styles.metaValue}>{details.rawHitCount}</div>
           </div>
           <div className={styles.metaRow}>
             <div className={styles.metaLabel}>轮询游标</div>

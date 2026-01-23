@@ -160,7 +160,8 @@ export default async function AdminLinksPage({
                   <th>重定向链接</th>
                   <th>状态</th>
                   <th>创建时间</th>
-                  <th>点击数</th>
+                  <th>有效点击</th>
+                  <th>原始请求</th>
                   <th>目标数</th>
                   <th />
                 </tr>
@@ -209,6 +210,7 @@ export default async function AdminLinksPage({
                       </td>
                       <td className={styles.mono}>{fmtDate(s.createdAt)}</td>
                       <td className={styles.mono}>{s.totalClickCount}</td>
+                      <td className={styles.mono}>{s.rawHitCount}</td>
                       <td className={styles.mono}>
                         {s.enabledDestinationCount}/{s.destinationCount}
                       </td>

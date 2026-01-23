@@ -55,8 +55,5 @@ export async function resolveRedirectForSlug(
     return { kind: "not_found" };
   }
 
-  if (track) {
-    void kv.recordClick(slug, chosen.id).catch(() => {});
-  }
   return { kind: "redirect", url: chosen.url, destinationId: chosen.id };
 }
